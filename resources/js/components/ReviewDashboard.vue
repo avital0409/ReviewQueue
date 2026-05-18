@@ -242,7 +242,7 @@
 
               <!-- Recommendation badge card -->
               <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 flex flex-col justify-between relative overflow-hidden group">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">AI Resolution Action</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Heuristic Auto-Action</span>
                 
                 <div class="my-4 flex items-center gap-3">
                   <div :class="[

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreItemRequest;
 use App\Models\Item;
 use App\Services\HeuristicEngineService;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -112,5 +113,23 @@ class ItemController extends Controller
         ]);
 
         return response()->json($item);
+    }
+
+    /**
+     * Generate a creative dynamic mock item using local Ollama.
+     */
+    public function generate(OllamaService $ollama)
+    {
+        // Prevent cold-start timeouts when local Ollama first loads the model into RAM
+        @set_time_limit(120);
+
+        try {
+            return response()->json($ollama->generateMockItem());
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'fallback',
+                'message' => 'No active local AI providers detected. Falling back to local static personas.'
+            ]);
+        }
     }
 }
