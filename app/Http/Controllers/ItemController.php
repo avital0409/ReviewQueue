@@ -6,6 +6,8 @@ use App\Http\Requests\StoreItemRequest;
 use App\Models\Item;
 use App\Services\HeuristicEngineService;
 use App\Services\OllamaService;
+use App\Mail\ItemRejectedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -102,6 +104,8 @@ class ItemController extends Controller
         $request->validate([
             'status' => 'required|in:approved,rejected',
             'reviewer_note' => 'nullable|string',
+            'send_email' => 'nullable|boolean',
+            'email_body' => 'nullable|string',
         ]);
 
         $item = Item::findOrFail($id);
@@ -112,7 +116,27 @@ class ItemController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        if ($request->status === 'rejected' && $request->input('send_email')) {
+            $emailBody = $request->input('email_body') ?: $request->reviewer_note ?: 'Content does not meet community guidelines.';
+            Mail::to($item->author_email)->send(new ItemRejectedMail($item->content, $emailBody));
+        }
+
         return response()->json($item);
+    }
+
+    /**
+     * Generate a dynamic rejection email draft using local Ollama.
+     */
+    public function rejectionDraft(Request $request, $id, OllamaService $ollama)
+    {
+        $item = Item::findOrFail($id);
+        $reason = $request->input('reviewer_note');
+
+        $draft = $ollama->generateRejectionEmailDraft($item->content, $item->author_email, $reason);
+
+        return response()->json([
+            'draft' => $draft,
+        ]);
     }
 
     /**

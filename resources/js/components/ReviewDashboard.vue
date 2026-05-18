@@ -362,16 +362,49 @@
 
           <!-- Detail Actions Bar (Approve / Reject) -->
           <div v-if="activeItem.status === 'pending'" class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10">
-            <button 
-              @click="submitReview('rejected')" 
-              :disabled="actioning"
-              class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-500/10 hover:from-red-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Reject Content
-            </button>
+            <!-- Split Reject Button Container -->
+            <div class="relative inline-flex items-stretch rounded-xl shadow-lg shadow-red-500/10 reject-split-btn-container">
+              <!-- Primary Reject & Email button -->
+              <button 
+                @click="isRejectionEmailModalOpen = true" 
+                :disabled="actioning"
+                class="inline-flex items-center gap-2 rounded-l-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-3.5 text-sm font-semibold text-white hover:from-red-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all border-r border-red-700/30"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Reject Content
+              </button>
+              
+              <!-- Dropdown trigger button -->
+              <button 
+                @click="isRejectDropdownOpen = !isRejectDropdownOpen"
+                :disabled="actioning"
+                class="inline-flex items-center px-3 rounded-r-xl bg-gradient-to-r from-rose-600 to-rose-600 text-white hover:from-rose-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <svg class="h-3 w-3 transform transition-transform duration-250" :class="{ 'rotate-180': isRejectDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Floating Dropdown list -->
+              <div 
+                v-if="isRejectDropdownOpen" 
+                class="absolute bottom-full right-0 mb-1 w-56 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-1.5 shadow-xl shadow-slate-250/50 z-20 animate-in fade-in slide-in-from-bottom-2 duration-150"
+              >
+                <button 
+                  @click="submitReviewSilently"
+                  class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-rose-600 hover:bg-rose-50/80 transition-colors"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Reject Silently (No Email)
+                </button>
+              </div>
+            </div>
+
+            <!-- Approve Button -->
             <button 
               @click="submitReview('approved')" 
               :disabled="actioning"
@@ -411,13 +444,23 @@
       @close="isModalOpen = false" 
       @submitted="handleItemSubmitted"
     />
+
+    <!-- Rejection Email Modal component -->
+    <RejectionEmailModal 
+      :isOpen="isRejectionEmailModalOpen" 
+      :item="activeItem"
+      :reviewerNote="reviewNote"
+      @close="isRejectionEmailModalOpen = false" 
+      @confirm="handleRejectionConfirmed"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import SubmitItemModal from './SubmitItemModal.vue';
+import RejectionEmailModal from './RejectionEmailModal.vue';
 
 // Local Reactive State
 const items = ref([]);
@@ -427,6 +470,8 @@ const loading = ref(false);
 const actioning = ref(false);
 const reviewNote = ref('');
 const isModalOpen = ref(false);
+const isRejectionEmailModalOpen = ref(false);
+const isRejectDropdownOpen = ref(false);
 
 const filters = reactive({
   search: '',
@@ -548,6 +593,91 @@ const submitReview = async (status) => {
   }
 };
 
+// Handle rejection confirmation after email preview and customization
+const handleRejectionConfirmed = async ({ sendEmail, emailBody }) => {
+  isRejectionEmailModalOpen.value = false;
+  if (!activeItemId.value) return;
+
+  actioning.value = true;
+  const currentId = activeItemId.value;
+  const nextItem = getNextPendingItemAfter(currentId);
+
+  // Optimistic UI update
+  const currentItemIndex = items.value.findIndex(item => item.id === currentId);
+  if (currentItemIndex !== -1) {
+    items.value[currentItemIndex].status = 'rejected';
+    items.value[currentItemIndex].reviewer_note = reviewNote.value;
+    items.value[currentItemIndex].reviewed_at = new Date().toISOString();
+  }
+
+  // Instantly slide selection to the next pending item in the queue
+  if (nextItem) {
+    activeItemId.value = nextItem.id;
+  } else {
+    activeItemId.value = null;
+  }
+
+  const payload = {
+    status: 'rejected',
+    reviewer_note: reviewNote.value,
+    send_email: sendEmail,
+    email_body: emailBody
+  };
+  reviewNote.value = '';
+
+  try {
+    await axios.patch(`/api/items/${currentId}/review`, payload);
+    await fetchItemsSilent();
+  } catch (err) {
+    console.error('Failed to submit review rejection:', err);
+    fetchItems();
+  } finally {
+    actioning.value = false;
+  }
+};
+
+// Perform silent, instant content rejection bypassing the email modal entirely
+const submitReviewSilently = async () => {
+  isRejectDropdownOpen.value = false;
+  if (!activeItemId.value) return;
+
+  actioning.value = true;
+  const currentId = activeItemId.value;
+  const nextItem = getNextPendingItemAfter(currentId);
+
+  // Optimistic UI update
+  const currentItemIndex = items.value.findIndex(item => item.id === currentId);
+  if (currentItemIndex !== -1) {
+    items.value[currentItemIndex].status = 'rejected';
+    items.value[currentItemIndex].reviewer_note = reviewNote.value;
+    items.value[currentItemIndex].reviewed_at = new Date().toISOString();
+  }
+
+  // Instantly slide selection to the next pending item in the queue
+  if (nextItem) {
+    activeItemId.value = nextItem.id;
+  } else {
+    activeItemId.value = null;
+  }
+
+  const payload = {
+    status: 'rejected',
+    reviewer_note: reviewNote.value,
+    send_email: false
+  };
+  reviewNote.value = '';
+
+  try {
+    await axios.patch(`/api/items/${currentId}/review`, payload);
+    await fetchItemsSilent();
+  } catch (err) {
+    console.error('Failed to submit silent rejection:', err);
+    fetchItems();
+  } finally {
+    actioning.value = false;
+  }
+};
+
 // Get the next item to review
 const getNextPendingItemAfter = (currentItemId) => {
   const currentIdx = items.value.findIndex(item => item.id === currentItemId);
@@ -602,8 +732,19 @@ const handleItemSubmitted = (newItem) => {
   fetchItemsSilent();
 };
 
+const closeRejectDropdown = (e) => {
+  if (!e.target.closest('.reject-split-btn-container')) {
+    isRejectDropdownOpen.value = false;
+  }
+};
+
 onMounted(() => {
   fetchItems();
+  window.addEventListener('click', closeRejectDropdown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeRejectDropdown);
 });
 </script>
 

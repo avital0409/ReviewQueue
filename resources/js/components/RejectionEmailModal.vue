@@ -1,0 +1,164 @@
+<template>
+  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div class="w-full max-w-2xl bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-350/80 overflow-hidden flex flex-col max-h-[90vh] transform transition-all duration-300 animate-in fade-in zoom-in-95">
+      <!-- Modal Header -->
+      <div class="border-b border-slate-100 bg-slate-50/50 p-6 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l8-4.8a2 2 0 012.22 0l8 4.8A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.22 0l-2.25 1.5" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Rejection Notification Email</h3>
+            <p class="text-xs text-slate-500">Draft a constructive rejection notice for the submitter</p>
+          </div>
+        </div>
+        <button @click="$emit('close')" class="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
+        <!-- Recipient & Subject Info fields -->
+        <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-150 text-xs">
+          <div class="grid grid-cols-[60px_1fr] items-center gap-2">
+            <span class="font-bold text-slate-400 uppercase tracking-wider text-right pr-2">To:</span>
+            <span class="font-semibold text-slate-700 font-mono select-all">{{ item.author_email }}</span>
+          </div>
+          <div class="h-px bg-slate-200"></div>
+          <div class="grid grid-cols-[60px_1fr] items-center gap-2">
+            <span class="font-bold text-slate-400 uppercase tracking-wider text-right pr-2">Subject:</span>
+            <span class="font-semibold text-slate-700">Submission Rejection Notice - ReviewQueue</span>
+          </div>
+        </div>
+
+        <!-- AI Draft Loading State -->
+        <div v-if="loadingDraft" class="flex flex-col items-center justify-center py-12 text-center space-y-4">
+          <!-- Pulse loading circles -->
+          <div class="relative flex items-center justify-center">
+            <div class="absolute h-12 w-12 rounded-full bg-blue-500/10 animate-ping"></div>
+            <div class="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
+              ✨
+            </div>
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-slate-800">AI is drafting rejection email...</p>
+            <p class="text-xs text-slate-400 max-w-xs">Generating a polite, context-aware notification using local Ollama model.</p>
+          </div>
+        </div>
+
+        <!-- Rich Email Editor View -->
+        <div v-else class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Email Body Draft</label>
+            <button 
+              @click="generateDraft" 
+              class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <span>✨</span> Regenerate AI Draft
+            </button>
+          </div>
+
+          <textarea 
+            v-model="emailBody"
+            rows="10"
+            class="w-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-y transition-all shadow-inner font-sans"
+            placeholder="Write customized rejection email details here..."
+          ></textarea>
+        </div>
+
+        <!-- Send option toggle -->
+        <div class="flex items-center justify-between p-4 bg-rose-50/50 rounded-2xl border border-rose-100/50">
+          <div class="space-y-0.5">
+            <label for="sendEmailToggle" class="text-sm font-bold text-slate-800 select-none cursor-pointer">Send Email Notification</label>
+            <p class="text-xs text-slate-500">Dispatch this notification to the submitter's email address</p>
+          </div>
+          <div class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              id="sendEmailToggle" 
+              v-model="sendEmail" 
+              class="sr-only peer"
+            >
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t border-slate-100 bg-slate-50/50 p-6 flex items-center justify-end gap-3 shrink-0">
+        <button 
+          @click="$emit('close')" 
+          class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus:outline-none transition-all"
+        >
+          Cancel
+        </button>
+        <button 
+          @click="confirmRejection" 
+          :disabled="submitting"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/10 hover:from-red-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ sendEmail ? 'Send Notification & Reject' : 'Confirm Rejection Only' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue';
+import axios from 'axios';
+
+const props = defineProps({
+  isOpen: Boolean,
+  item: Object,
+  reviewerNote: String
+});
+
+const emit = defineEmits(['close', 'confirm']);
+
+const emailBody = ref('');
+const sendEmail = ref(true);
+const loadingDraft = ref(false);
+const submitting = ref(false);
+
+const generateDraft = async () => {
+  if (!props.item) return;
+  loadingDraft.value = true;
+  try {
+    const response = await axios.post(`/api/items/${props.item.id}/rejection-draft`, {
+      reviewer_note: props.reviewerNote
+    });
+    emailBody.value = response.data.draft || '';
+  } catch (err) {
+    console.error('Failed to generate AI draft:', err);
+    emailBody.value = `Dear Submitter,\n\nThank you for your submission to our platform. After careful review of your content, our moderation team has decided to reject this post.\n\nReason for Rejection:\n- ${props.reviewerNote || 'Content did not comply with our standard guidelines.'}\n\nWarm regards,\nReviewQueue Moderation Hub`;
+  } finally {
+    loadingDraft.value = false;
+  }
+};
+
+// Whenever modal opens, generate a fresh dynamic draft
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    sendEmail.value = true;
+    generateDraft();
+  }
+});
+
+const confirmRejection = () => {
+  submitting.value = true;
+  emit('confirm', {
+    sendEmail: sendEmail.value,
+    emailBody: emailBody.value
+  });
+  submitting.value = false;
+};
+</script>
