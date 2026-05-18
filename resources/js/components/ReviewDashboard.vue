@@ -213,19 +213,37 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3 block">Heuristic Risk Score</span>
                 
                 <div class="relative flex items-center justify-center h-28 w-28">
-                  <!-- Circular track border -->
-                  <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
-                  <!-- Active colored glow -->
-                  <div :class="[
-                    'absolute inset-0 rounded-full border-4 transition-all duration-700',
-                    activeItem.risk_score >= 75 ? 'border-red-500 shadow-sm shadow-red-500/10' : '',
-                    activeItem.risk_score >= 25 && activeItem.risk_score < 75 ? 'border-amber-500' : '',
-                    activeItem.risk_score < 25 ? 'border-green-500' : ''
-                  ]" :style="{ clipPath: `polygon(50% 50%, -50% -50%, ${activeItem.risk_score >= 50 ? '150% -50%, 150% 150%' : '150% -50%'}, -50% 150%)` }"></div>
+                  <!-- SVG Circular Progress Ring -->
+                  <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
+                    <!-- Background Track -->
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      stroke="#f1f5f9"
+                      stroke-width="8"
+                      fill="transparent"
+                    />
+                    <!-- Foreground Dynamic Progress -->
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      :stroke="
+                        activeItem.risk_score >= 75 ? '#ef4444' : (activeItem.risk_score >= 25 ? '#f59e0b' : '#10b981')
+                      "
+                      stroke-width="8"
+                      fill="transparent"
+                      stroke-dasharray="251.2"
+                      :stroke-dashoffset="251.2 - (251.2 * activeItem.risk_score) / 100"
+                      stroke-linecap="round"
+                      class="transition-all duration-1000 ease-out"
+                    />
+                  </svg>
 
-                  <div class="flex flex-col items-center z-10">
+                  <div class="absolute flex flex-col items-center justify-center z-10">
                     <span class="text-3xl font-extrabold tracking-tight text-slate-800">{{ activeItem.risk_score }}</span>
-                    <span class="text-[10px] uppercase font-bold text-slate-450">Rating</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-450">Risk</span>
                   </div>
                 </div>
 
@@ -313,7 +331,7 @@
               </div>
             </div>
 
-            <!-- 3. Reviewer Action Note -->
+            <!-- 3. Reviewer Action Note / Display -->
             <div class="space-y-2.5 pt-4 border-t border-slate-200">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,7 +339,19 @@
                 </svg>
                 Reviewer Resolution Notes
               </h3>
+
+              <div v-if="activeItem.status !== 'pending'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-100/50 space-y-2">
+                <div class="flex items-center justify-between text-xs text-slate-450">
+                  <span class="font-bold uppercase tracking-wider text-blue-600">Resolution Status: {{ activeItem.status }}</span>
+                  <span class="font-medium">{{ formatRelativeTime(activeItem.reviewed_at) }}</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed italic whitespace-pre-wrap">
+                  {{ activeItem.reviewer_note || 'No resolution notes provided by reviewer.' }}
+                </p>
+              </div>
+
               <textarea 
+                v-else
                 v-model="reviewNote"
                 rows="3"
                 placeholder="Provide reasoning, notes, or categorization justification (optional)..."
@@ -331,7 +361,7 @@
           </div>
 
           <!-- Detail Actions Bar (Approve / Reject) -->
-          <div class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10">
+          <div v-if="activeItem.status === 'pending'" class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10">
             <button 
               @click="submitReview('rejected')" 
               :disabled="actioning"
@@ -486,6 +516,8 @@ const submitReview = async (status) => {
   const currentItemIndex = items.value.findIndex(item => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = status;
+    items.value[currentItemIndex].reviewer_note = reviewNote.value;
+    items.value[currentItemIndex].reviewed_at = new Date().toISOString();
   }
 
   // Instantly slide selection to the next pending item in the queue for smooth reviewer flow
