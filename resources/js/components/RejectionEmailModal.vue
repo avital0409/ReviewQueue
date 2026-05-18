@@ -83,23 +83,6 @@
             placeholder="Write customized rejection email details here..."
           ></textarea>
         </div>
-
-        <!-- Send option toggle -->
-        <div class="flex items-center justify-between p-4 bg-rose-50/50 rounded-2xl border border-rose-100/50">
-          <div class="space-y-0.5">
-            <label for="sendEmailToggle" class="text-sm font-bold text-slate-800 select-none cursor-pointer">Send Email Notification</label>
-            <p class="text-xs text-slate-500">Dispatch this notification to the submitter's email address</p>
-          </div>
-          <div class="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              id="sendEmailToggle" 
-              v-model="sendEmail" 
-              class="sr-only peer"
-            >
-            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
-          </div>
-        </div>
       </div>
 
       <!-- Modal Footer -->
