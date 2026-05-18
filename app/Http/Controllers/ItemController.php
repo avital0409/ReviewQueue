@@ -7,7 +7,9 @@ use App\Models\Item;
 use App\Services\HeuristicEngineService;
 use App\Services\OllamaService;
 use App\Mail\ItemRejectedMail;
+use App\Mail\ItemBannedMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -46,6 +48,26 @@ class ItemController extends Controller
 
         $items = $query->get();
 
+        // Proactively fetch and append unique user rejections (strikes) and ban statuses
+        // This is highly performant and avoids N+1 query locks.
+        $emails = $items->pluck('author_email')->unique();
+        
+        $rejectionsCounts = Item::whereIn('author_email', $emails)
+            ->where('status', 'rejected')
+            ->select('author_email', DB::raw('count(*) as count'))
+            ->groupBy('author_email')
+            ->pluck('count', 'author_email');
+            
+        $bannedEmails = DB::table('banned_users')
+            ->whereIn('email', $emails)
+            ->pluck('email')
+            ->toArray();
+            
+        foreach ($items as $item) {
+            $item->author_rejections_count = $rejectionsCounts[$item->author_email] ?? 0;
+            $item->author_is_banned = in_array($item->author_email, $bannedEmails) ? 1 : 0;
+        }
+
         // Calculate dynamic state counters based on active search
         $countsQuery = Item::query();
         if ($request->has('search') && !empty($request->search)) {
@@ -67,6 +89,7 @@ class ItemController extends Controller
             'pending' => $allCounts['pending'] ?? 0,
             'approved' => $allCounts['approved'] ?? 0,
             'rejected' => $allCounts['rejected'] ?? 0,
+            'blocked' => $allCounts['blocked'] ?? 0,
         ];
 
         return response()->json([
@@ -82,6 +105,25 @@ class ItemController extends Controller
     {
         $validated = $request->validated();
 
+        // 1. Gateway Ban Check: Intercept banned submitters at the entry point
+        $isBanned = DB::table('banned_users')->where('email', $validated['author_email'])->exists();
+        
+        if ($isBanned) {
+            $item = Item::create([
+                'author_email' => $validated['author_email'],
+                'content' => $validated['content'],
+                'status' => 'blocked',
+                'risk_score' => 100,
+                'heuristic_flags' => ['banned_author'],
+                'auto_suggestion' => 'reject',
+                'reviewer_note' => 'Auto-rejected: Submitter is permanently banned.',
+                'reviewed_at' => now(),
+            ]);
+            
+            return response()->json($item, 201);
+        }
+
+        // 2. Standard heuristic scan pipeline
         $analysis = $engine->analyze($validated['content']);
 
         $item = Item::create([
@@ -106,6 +148,8 @@ class ItemController extends Controller
             'reviewer_note' => 'nullable|string',
             'send_email' => 'nullable|boolean',
             'email_body' => 'nullable|string',
+            'ban_user' => 'nullable|boolean',
+            'ban_reason' => 'nullable|string',
         ]);
 
         $item = Item::findOrFail($id);
@@ -116,7 +160,30 @@ class ItemController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        if ($request->status === 'rejected' && $request->input('send_email')) {
+        // 1. Process Permanent Ban Escalation
+        if ($request->status === 'rejected' && $request->input('ban_user')) {
+            $banReason = $request->input('ban_reason') ?: $request->reviewer_note ?: 'Repeated policy violations (Strike 3 exceeded).';
+            
+            DB::table('banned_users')->updateOrInsert(
+                ['email' => $item->author_email],
+                [
+                    'banned_at' => now(),
+                    'ban_reason' => $banReason,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            );
+
+            if ($request->input('send_email')) {
+                Mail::to($item->author_email)->send(new ItemBannedMail(
+                    $item->author_email,
+                    $banReason,
+                    $item->content
+                ));
+            }
+        } 
+        // 2. Process Standard Rejection Notice
+        elseif ($request->status === 'rejected' && $request->input('send_email')) {
             $emailBody = $request->input('email_body') ?: $request->reviewer_note ?: 'Content does not meet community guidelines.';
             Mail::to($item->author_email)->send(new ItemRejectedMail($item->content, $emailBody));
         }
@@ -125,14 +192,23 @@ class ItemController extends Controller
     }
 
     /**
-     * Generate a dynamic rejection email draft using local Ollama.
+     * Generate a dynamic rejection or ban email draft using local Ollama.
      */
     public function rejectionDraft(Request $request, $id, OllamaService $ollama)
     {
         $item = Item::findOrFail($id);
         $reason = $request->input('reviewer_note');
+        $isBan = $request->input('is_ban', false);
 
-        $draft = $ollama->generateRejectionEmailDraft($item->content, $item->author_email, $reason);
+        if ($isBan) {
+            $draft = $ollama->generateAccountBanEmailDraft(
+                $item->author_email,
+                $item->content,
+                $reason ?: 'Repeated policy violations (Strike 3 exceeded).'
+            );
+        } else {
+            $draft = $ollama->generateRejectionEmailDraft($item->content, $item->author_email, $reason);
+        }
 
         return response()->json([
             'draft' => $draft,
@@ -144,7 +220,6 @@ class ItemController extends Controller
      */
     public function generate(OllamaService $ollama)
     {
-        // Prevent cold-start timeouts when local Ollama first loads the model into RAM
         @set_time_limit(120);
 
         try {

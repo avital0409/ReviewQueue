@@ -131,7 +131,11 @@ class OllamaService
             - Write in a highly professional, constructive, and polite tone.
             - Explain the rejection based on the reviewer's reasoning.
             - Include constructive advice on how they can submit policy-compliant content in the future.
-            - Do not include subject lines, markdown signatures, or HTML templates. Return ONLY the drafted body text of the email starting with a greeting and ending with a signature.";
+            - Do not include subject lines, markdown signatures, or HTML templates.
+            - NEVER use ANY bracketed placeholders or template variables (e.g., '[User]', '[User Name]', '[Name]', '[Date]', '[Your Name]', '[Community Name]', '[insert...]'). All text must be fully written out, literal, and complete.
+            - If you do not know the user's name, greet them simply as 'Dear Submitter' or 'Dear User'.
+            - Sign the email strictly as 'ReviewQueue Moderation Hub'. Do not leave placeholders for your name or the community name.
+            - Return ONLY the drafted body text of the email starting with a greeting and ending with a signature.";
 
             // Auto-detect installed models
             $modelsResponse = Http::timeout(2)->get("{$this->ollamaUrl}/api/tags");
@@ -179,6 +183,82 @@ class OllamaService
     }
 
     /**
+     * Generate a formal permanent account ban and suspension notice using local Ollama model.
+     */
+    public function generateAccountBanEmailDraft(string $email, string $content, string $reason): string
+    {
+        if (!$this->isOllamaAvailable()) {
+            return $this->getFallbackBanDraft($email, $content, $reason);
+        }
+
+        try {
+            $prompt = "Write a highly professional, firm, yet polite Account Suspension & Permanent Ban Notice to a user with email address '{$email}'.
+            They have repeatedly violated our content policies, exceeding our strike limit.
+            
+            Violating Content Snippet:
+            '{$content}'
+            
+            Moderator Notes/Reason for Suspension:
+            '{$reason}'
+            
+            Instructions:
+            - Write in a firm, formal, clear, and highly professional tone.
+            - Explicitly state that their email '{$email}' is permanently banned from making future submissions.
+            - Clarify that their account/email address has been permanently suspended due to repeated guidelines violations (reaching Strike 4).
+            - Explain the suspension based on the moderator's notes and the violating content.
+            - Do not include subject lines, markdown signatures, or HTML templates.
+            - NEVER use ANY bracketed placeholders or template variables (e.g., '[User]', '[User Name]', '[Name]', '[Date]', '[Your Name]', '[Community Name]', '[insert...]'). All text must be fully written out, literal, and complete.
+            - If you do not know the user's name, greet them simply as 'Dear Submitter' or 'Dear User'.
+            - Sign the email strictly as 'ReviewQueue Moderation Hub'. Do not leave placeholders for your name or the community name.
+            - Do not write dynamic date placeholders like '[Date]'. If referring to a date or time, refer to it generally as 'recently' or 'in your recent submissions'.
+            - Return ONLY the drafted body text of the email starting with a formal greeting and ending with a signature.";
+
+            // Auto-detect installed models
+            $modelsResponse = Http::timeout(2)->get("{$this->ollamaUrl}/api/tags");
+            $model = $this->ollamaModel;
+
+            if ($modelsResponse->successful()) {
+                $modelsList = $modelsResponse->json()['models'] ?? [];
+                if (!empty($modelsList)) {
+                    $hasModel = false;
+                    foreach ($modelsList as $m) {
+                        if (isset($m['name'])) {
+                            $itemModelName = strtolower($m['name']);
+                            $targetModelName = strtolower($this->ollamaModel);
+                            if ($itemModelName === $targetModelName || $itemModelName === $targetModelName . ':latest' || $targetModelName === $itemModelName . ':latest') {
+                                $hasModel = true;
+                                $model = $m['name'];
+                                break;
+                            }
+                        }
+                    }
+                    if (!$hasModel && isset($modelsList[0]['name'])) {
+                        $model = $modelsList[0]['name'];
+                    }
+                }
+            }
+
+            $response = Http::timeout(45)->post("{$this->ollamaUrl}/api/generate", [
+                'model' => $model,
+                'prompt' => $prompt,
+                'stream' => false
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $draft = trim($data['response'] ?? '');
+                if (!empty($draft)) {
+                    return $draft;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Failed to generate ban draft with Ollama: " . $e->getMessage());
+        }
+
+        return $this->getFallbackBanDraft($email, $content, $reason);
+    }
+
+    /**
      * Premium static fallback rejection email text.
      */
     protected function getFallbackRejectionDraft(string $content, string $reason): string
@@ -193,5 +273,24 @@ class OllamaService
                "If you believe this decision was made in error or would like to submit updated content that adheres to our policies, please contact support or revise your submission details.\n\n" .
                "Warm regards,\n" .
                "ReviewQueue Moderation Hub";
+    }
+
+    /**
+     * Premium static fallback account ban notice email text.
+     */
+    protected function getFallbackBanDraft(string $email, string $content, string $reason): string
+    {
+        $snippet = strlen($content) > 120 ? substr($content, 0, 120) . '...' : $content;
+        return "Dear Submitter,\n\n" .
+               "This is a formal notice that your email address ({$email}) has been permanently suspended from submitting content to our platform.\n\n" .
+               "Our Trust & Safety system identified repeated policy violations associated with your submissions, exceeding our allowed community standards limit (Strike 3 policy exceeded).\n\n" .
+               "Official Ban Reason / Notes:\n" .
+               "• " . $reason . "\n\n" .
+               "Violating Submission Content:\n" .
+               "\"" . $snippet . "\"\n\n" .
+               "As a result of this permanent suspension, any future submissions sent from your email address will be automatically rejected and blocked by our gateway filter.\n\n" .
+               "If you believe this suspension was made in error, you may reply to this notice to file an appeal with our senior moderation administration.\n\n" .
+               "Sincerely,\n" .
+               "ReviewQueue Moderation & Safety Hub";
     }
 }

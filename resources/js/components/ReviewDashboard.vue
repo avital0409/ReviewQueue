@@ -11,9 +11,31 @@
         <div>
           <h1 class="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-2">
             ModHub
-            <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">Reviewer Queue v1.0</span>
+            <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">Trust & Safety Hub</span>
           </h1>
         </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-6 text-sm h-full font-bold">
+        <button 
+          @click="activeTab = 'queue'"
+          :class="[
+            'h-full px-2 border-b-2 transition-all duration-200',
+            activeTab === 'queue' ? 'text-blue-600 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-transparent'
+          ]"
+        >
+          Moderation Queue
+        </button>
+        <button 
+          @click="activeTab = 'users'; fetchUsers()"
+          :class="[
+            'h-full px-2 border-b-2 transition-all duration-200',
+            activeTab === 'users' ? 'text-blue-600 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-transparent'
+          ]"
+        >
+          User Directory
+        </button>
       </div>
 
       <div class="flex items-center gap-4">
@@ -29,8 +51,8 @@
       </div>
     </header>
 
-    <!-- Main Content split pane -->
-    <div class="flex min-h-0 flex-1 flex-row">
+    <!-- TAB 1: Moderation Queue -->
+    <div v-if="activeTab === 'queue'" class="flex min-h-0 flex-1 flex-row">
       <!-- Left Pane: Sidebar Queue -->
       <aside class="flex w-[600px] shrink-0 flex-col border-r border-slate-200 bg-white">
         <!-- Search, Sort & Status Filters -->
@@ -54,7 +76,7 @@
           <!-- Status Filters Row -->
           <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
             <button 
-              v-for="statusOpt in ['all', 'pending', 'approved', 'rejected']"
+              v-for="statusOpt in ['all', 'pending', 'approved', 'rejected', 'blocked']"
               :key="statusOpt"
               @click="setStatusFilter(statusOpt)"
               :class="[
@@ -120,14 +142,19 @@
           >
             <!-- Header on card -->
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">#{{ item.id }}</span>
+              <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                #{{ item.id }}
+                <!-- User Banned Signifier on Sidebar -->
+                <span v-if="item.author_is_banned" class="rounded bg-red-600 px-1 py-0.2 text-[8px] font-bold text-white uppercase">Banned</span>
+              </span>
               <div class="flex items-center gap-1.5">
                 <!-- Status Badge -->
                 <span :class="[
                   'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
                   item.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
                   item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
-                  item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : ''
+                  item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
+                  item.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
                 ]">
                   {{ item.status }}
                 </span>
@@ -146,8 +173,14 @@
 
             <!-- Email & Time -->
             <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors truncate max-w-44">{{ item.author_email }}</span>
-              <span class="text-slate-400 shrink-0">{{ formatRelativeTime(item.created_at) }}</span>
+              <span class="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors truncate max-w-[170px]">{{ item.author_email }}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <!-- Striking Indicator Badge in Sidebar -->
+                <span v-if="item.author_rejections_count > 0" class="text-[9px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5">
+                  ⚠️ Strike {{ item.author_rejections_count }}
+                </span>
+                <span class="text-slate-400">{{ formatRelativeTime(item.created_at) }}</span>
+              </div>
             </div>
 
             <!-- Truncated Content text -->
@@ -181,10 +214,13 @@
                   'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider border',
                   activeItem.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
                   activeItem.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
-                  activeItem.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : ''
+                  activeItem.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
+                  activeItem.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
                 ]">
                   {{ activeItem.status }}
                 </span>
+                <!-- Header Ban Signifier -->
+                <span v-if="activeItem.author_is_banned" class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-extrabold text-white uppercase border border-red-700 shadow-md">Banned Submitter</span>
               </div>
               <p class="text-xs text-slate-500">
                 Submitted by <span class="font-semibold text-slate-700">{{ activeItem.author_email }}</span>
@@ -195,6 +231,24 @@
 
           <!-- Detail Body Scrollable -->
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- Strike warning prompt banner -->
+            <div 
+              v-if="activeItem.author_rejections_count >= 3 && activeItem.status === 'pending'" 
+              class="p-4 rounded-2xl border flex items-center gap-3.5 shadow-sm transform transition-all duration-300 animate-pulse"
+              :class="isBanEscalated ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'"
+            >
+              <div class="text-2xl">⚠️</div>
+              <div class="space-y-0.5 flex-1">
+                <div class="text-sm font-bold">
+                  {{ isBanEscalated ? 'Strike Escalation: Permanent Ban Recommended!' : 'Repeat Offender Alert: User is at strike limit!' }}
+                </div>
+                <div class="text-xs">
+                  Submitter has <strong>{{ activeItem.author_rejections_count }} prior rejections</strong>.
+                  {{ isBanEscalated ? 'This post triggers rejection recommendations. Rejecting this content will permanently ban this user from submissions.' : 'Exercise caution. Further rejections will result in a permanent ban.' }}
+                </div>
+              </div>
+            </div>
+
             <!-- 1. Submission Content Box -->
             <div class="space-y-2.5">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Content</h3>
@@ -215,23 +269,12 @@
                 <div class="relative flex items-center justify-center h-28 w-28">
                   <!-- SVG Circular Progress Ring -->
                   <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                    <!-- Background Track -->
+                    <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
                     <circle
                       cx="50"
                       cy="50"
                       r="40"
-                      stroke="#f1f5f9"
-                      stroke-width="8"
-                      fill="transparent"
-                    />
-                    <!-- Foreground Dynamic Progress -->
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      :stroke="
-                        activeItem.risk_score >= 75 ? '#ef4444' : (activeItem.risk_score >= 25 ? '#f59e0b' : '#10b981')
-                      "
+                      :stroke="activeItem.risk_score >= 75 ? '#ef4444' : (activeItem.risk_score >= 25 ? '#f59e0b' : '#10b981')"
                       stroke-width="8"
                       fill="transparent"
                       stroke-dasharray="251.2"
@@ -265,12 +308,14 @@
                 <div class="my-4 flex items-center gap-3">
                   <div :class="[
                     'h-12 w-12 rounded-xl flex items-center justify-center border',
-                    activeItem.auto_suggestion === 'reject' ? 'bg-red-50 text-red-600 border-red-100' : '',
+                    isBanEscalated ? 'bg-red-600 text-white border-red-700 animate-pulse' : '',
+                    !isBanEscalated && activeItem.auto_suggestion === 'reject' ? 'bg-red-50 text-red-600 border-red-100' : '',
                     activeItem.auto_suggestion === 'approve' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
                     activeItem.auto_suggestion === 'none' ? 'bg-slate-50 text-slate-500 border-slate-200' : ''
                   ]">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path v-if="activeItem.auto_suggestion === 'reject'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path v-if="isBanEscalated" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      <path v-else-if="activeItem.auto_suggestion === 'reject'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       <path v-else-if="activeItem.auto_suggestion === 'approve'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -280,22 +325,25 @@
                     <span class="text-xs text-slate-400 block font-medium">Auto-Suggestion</span>
                     <span :class="[
                       'text-lg font-bold leading-none uppercase',
-                      activeItem.auto_suggestion === 'reject' ? 'text-red-600' : '',
+                      isBanEscalated ? 'text-red-600' : '',
+                      !isBanEscalated && activeItem.auto_suggestion === 'reject' ? 'text-red-600' : '',
                       activeItem.auto_suggestion === 'approve' ? 'text-emerald-600' : '',
                       activeItem.auto_suggestion === 'none' ? 'text-slate-700' : ''
                     ]">
-                      {{ activeItem.auto_suggestion === 'none' ? 'MANUAL REVIEW' : activeItem.auto_suggestion }}
+                      {{ isBanEscalated ? 'BAN USER' : (activeItem.auto_suggestion === 'none' ? 'MANUAL REVIEW' : activeItem.auto_suggestion) }}
                     </span>
                   </div>
                 </div>
 
-                <p class="text-[10px] text-slate-450 leading-normal">
+                <p class="text-[10px] text-slate-455 leading-normal">
                   {{ 
-                    activeItem.auto_suggestion === 'reject' 
-                      ? 'Heuristics triggered high risk spam metrics. Rejection is highly recommended.' 
-                      : (activeItem.auto_suggestion === 'approve' 
-                        ? 'Clean data, cleared automated filters. Approval recommended.' 
-                        : 'Mixed intent. Requires reviewer manually reading context details.')
+                    isBanEscalated 
+                      ? 'Automated Escalation: Submitter has 3+ past rejections and this post is suggested for rejection. Permanent suspension is recommended.' 
+                      : (activeItem.auto_suggestion === 'reject' 
+                        ? 'Heuristics triggered high risk spam metrics. Rejection is highly recommended.' 
+                        : (activeItem.auto_suggestion === 'approve' 
+                          ? 'Clean data, cleared automated filters. Approval recommended.' 
+                          : 'Mixed intent. Requires reviewer manually reading context details.'))
                   }}
                 </p>
               </div>
@@ -315,12 +363,14 @@
                       'inline-flex items-center gap-2 rounded-xl py-1.5 px-3 text-xs font-semibold w-full border',
                       flag === 'financial_keywords' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
                       flag === 'external_links' ? 'bg-blue-50 text-blue-700 border-blue-200/60' : '',
-                      flag === 'urgent_language' ? 'bg-violet-50 text-violet-700 border-violet-200/60' : ''
+                      flag === 'urgent_language' ? 'bg-violet-50 text-violet-700 border-violet-200/60' : '',
+                      flag === 'banned_author' ? 'bg-red-50 text-red-700 border-red-200/60' : ''
                     ]"
                   >
                     <span v-if="flag === 'financial_keywords'">💳</span>
                     <span v-else-if="flag === 'external_links'">🔗</span>
                     <span v-else-if="flag === 'urgent_language'">⚠️</span>
+                    <span v-else-if="flag === 'banned_author'">🚫</span>
                     {{ formatFlagName(flag) }}
                   </div>
                 </div>
@@ -341,7 +391,7 @@
               </h3>
 
               <div v-if="activeItem.status !== 'pending'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-100/50 space-y-2">
-                <div class="flex items-center justify-between text-xs text-slate-450">
+                <div class="flex items-center justify-between text-xs text-slate-455">
                   <span class="font-bold uppercase tracking-wider text-blue-600">Resolution Status: {{ activeItem.status }}</span>
                   <span class="font-medium">{{ formatRelativeTime(activeItem.reviewed_at) }}</span>
                 </div>
@@ -360,27 +410,29 @@
             </div>
           </div>
 
-          <!-- Detail Actions Bar (Approve / Reject) -->
+          <!-- Detail Actions Bar (Approve / Reject / Ban) -->
           <div v-if="activeItem.status === 'pending'" class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10">
-            <!-- Split Reject Button Container -->
+            <!-- Split Reject/Ban Button Container -->
             <div class="relative inline-flex items-stretch rounded-xl shadow-lg shadow-red-500/10 reject-split-btn-container">
               <!-- Primary Reject & Email button -->
               <button 
-                @click="isRejectionEmailModalOpen = true" 
+                @click="openRejectionEmailModal" 
                 :disabled="actioning"
-                class="inline-flex items-center gap-2 rounded-l-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-3.5 text-sm font-semibold text-white hover:from-red-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all border-r border-red-700/30"
+                class="inline-flex items-center gap-2 rounded-l-xl bg-gradient-to-r px-5 py-3.5 text-sm font-semibold text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all border-r border-red-700/30"
+                :class="isBanEscalated ? 'from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600' : 'from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500'"
               >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Reject Content
+                {{ isBanEscalated ? 'Reject & Ban Submitter' : 'Reject Content' }}
               </button>
               
               <!-- Dropdown trigger button -->
               <button 
                 @click="isRejectDropdownOpen = !isRejectDropdownOpen"
                 :disabled="actioning"
-                class="inline-flex items-center px-3 rounded-r-xl bg-gradient-to-r from-rose-600 to-rose-600 text-white hover:from-rose-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                class="inline-flex items-center px-3 rounded-r-xl text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                :class="isBanEscalated ? 'bg-gradient-to-r from-rose-750 to-rose-750 hover:from-rose-700 hover:to-rose-700' : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'"
               >
                 <svg class="h-3 w-3 transform transition-transform duration-250" :class="{ 'rotate-180': isRejectDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -401,6 +453,17 @@
                   </svg>
                   Reject Silently (No Email)
                 </button>
+                <!-- Manual Ban trigger in dropdown if not escalated -->
+                <button 
+                  v-if="!isBanEscalated"
+                  @click="openBanEmailModalDirect"
+                  class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-red-700 hover:bg-red-50 transition-colors"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Reject & Ban User
+                </button>
               </div>
             </div>
 
@@ -420,7 +483,6 @@
 
         <!-- Right Pane: Empty State -->
         <div v-else class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none">
-          <!-- Outer circles for premium look -->
           <div class="relative flex items-center justify-center mb-6">
             <div class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"></div>
             <div class="absolute h-24 w-24 rounded-full bg-blue-500/5 blur-xl"></div>
@@ -438,6 +500,240 @@
       </main>
     </div>
 
+    <!-- TAB 2: User Reputation Directory -->
+    <div v-else class="flex min-h-0 flex-1 flex-row">
+      <!-- Left Pane: Submitter Directory Grid -->
+      <aside class="flex w-[600px] shrink-0 flex-col border-r border-slate-200 bg-white">
+        <!-- Search and Sorting -->
+        <div class="border-b border-slate-100 p-4 space-y-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input 
+              v-model="userFilters.search"
+              @input="fetchUsers"
+              type="text" 
+              placeholder="Search submitters by email..."
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+            />
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-slate-400">Sort submitters by</span>
+            <select 
+              v-model="userFilters.sort"
+              @change="fetchUsers"
+              class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
+            >
+              <option value="violations">Strikes / Violations</option>
+              <option value="total">Total Submissions</option>
+              <option value="email">Email Alphabetical</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Users reputation items list -->
+        <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+          <div v-if="usersLoading" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+            <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-xs font-semibold tracking-wider uppercase">Loading Directory...</span>
+          </div>
+
+          <div v-else-if="users.length === 0" class="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400 gap-2">
+            <span class="text-sm font-bold text-slate-500">No Submitters Found</span>
+            <span class="text-xs">Try adapting your search filter.</span>
+          </div>
+
+          <div 
+            v-else
+            v-for="user in users" 
+            :key="user.author_email"
+            @click="selectUser(user.author_email)"
+            :class="[
+              'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
+              activeUserEmail === user.author_email 
+                ? 'bg-blue-50/50 border-l-2 border-l-blue-600' 
+                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent'
+            ]"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-slate-700 truncate max-w-[200px]">{{ user.author_email }}</span>
+              <span :class="[
+                'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
+                user.is_banned ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+              ]">
+                {{ user.is_banned ? 'Permanently Banned' : 'Active Account' }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-4 text-slate-500 font-medium">
+                <span>Total: <strong class="text-slate-700">{{ user.total_count }}</strong></span>
+                <span>Approved: <strong class="text-emerald-600">{{ user.approved_count }}</strong></span>
+                <span>Rejected: <strong class="text-rose-600">{{ user.rejected_count }}</strong></span>
+                <span>Blocked: <strong class="text-slate-700">{{ user.blocked_count }}</strong></span>
+              </div>
+              
+              <!-- Strike bubbles scorecard -->
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] font-bold text-slate-400 mr-1 uppercase">Strikes:</span>
+                <span 
+                  v-for="strike in 3" 
+                  :key="strike"
+                  class="h-2.5 w-2.5 rounded-full border border-slate-300 transition-colors"
+                  :class="[
+                    user.rejected_count >= strike ? 'bg-red-500 border-red-600' : 'bg-slate-100',
+                    user.is_banned ? 'bg-red-600 border-red-700' : ''
+                  ]"
+                ></span>
+                <span v-if="user.rejected_count > 3" class="text-xs font-bold text-red-600 ml-1">+{{ user.rejected_count - 3 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Pane: Submitter Submissions Audit Timeline -->
+      <main class="flex flex-1 flex-col overflow-hidden bg-slate-50 relative">
+        <div v-if="activeUserEmail" class="flex h-full flex-col">
+          <!-- Submitter details header -->
+          <div class="border-b border-slate-200 bg-white p-6 shrink-0 shadow-sm z-10 flex items-center justify-between">
+            <div class="space-y-1">
+              <h2 class="text-lg font-bold text-slate-900 truncate max-w-lg">{{ activeUserEmail }}</h2>
+              <p class="text-xs text-slate-500">
+                User reputation analysis & submission audit history.
+              </p>
+            </div>
+            
+            <button 
+              @click="toggleUserBan"
+              class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold border transition-all"
+              :class="userHistoryDetails?.is_banned 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm'
+                : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path v-if="userHistoryDetails?.is_banned" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              {{ userHistoryDetails?.is_banned ? 'Lift Ban' : 'Ban User' }}
+            </button>
+          </div>
+
+          <!-- Timeline body -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- Ban Details Alert Box if Banned -->
+            <div 
+              v-if="userHistoryDetails?.is_banned" 
+              class="p-5 rounded-2xl border border-red-200 bg-red-50/50 text-red-800 shadow-inner flex flex-col gap-1.5"
+            >
+              <div class="text-sm font-extrabold flex items-center gap-2">
+                <span>🚫</span> USER PERMANENTLY BANNED
+              </div>
+              <p class="text-xs text-red-700">
+                Suspended at <strong>{{ formatDate(userHistoryDetails.banned_at) }}</strong>.
+              </p>
+              <p class="text-xs leading-relaxed italic bg-white p-3 rounded-xl border border-red-100 text-red-900 mt-1">
+                <strong>Official Ban Reason:</strong> "{{ userHistoryDetails.ban_reason || 'Repeated violations of guidelines.' }}"
+              </p>
+            </div>
+
+            <!-- History Summary Stats Card -->
+            <div class="grid grid-cols-4 gap-4">
+              <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Posts</span>
+                <div class="text-2xl font-black text-slate-800 mt-1">{{ userHistoryDetails?.history?.length || 0 }}</div>
+              </div>
+              <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Approved</span>
+                <div class="text-2xl font-black text-emerald-600 mt-1">
+                  {{ userHistoryDetails?.history?.filter(h => h.status === 'approved').length || 0 }}
+                </div>
+              </div>
+              <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rejections (Strikes)</span>
+                <div class="text-2xl font-black text-red-600 mt-1">
+                  {{ userHistoryDetails?.history?.filter(h => h.status === 'rejected').length || 0 }}
+                </div>
+              </div>
+              <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Blocked</span>
+                <div class="text-2xl font-black text-slate-750 mt-1">
+                  {{ userHistoryDetails?.history?.filter(h => h.status === 'blocked').length || 0 }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Submission Chronological timeline list -->
+            <div class="space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Audit Trails</h3>
+              
+              <div v-if="userHistoryLoading" class="text-center py-8 text-xs text-slate-400 italic">
+                Loading history timeline...
+              </div>
+              <div v-else-if="!userHistoryDetails?.history || userHistoryDetails.history.length === 0" class="text-center py-8 text-xs text-slate-400 italic">
+                No submissions recorded for this email address.
+              </div>
+              
+              <div 
+                v-else
+                v-for="audit in userHistoryDetails.history" 
+                :key="audit.id"
+                class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-slate-300 transition-all"
+              >
+                <!-- Audit Item Header -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-800">#{{ audit.id }}</span>
+                    <span :class="[
+                      'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
+                      audit.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
+                      audit.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
+                      audit.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
+                      audit.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
+                    ]">
+                      {{ audit.status }}
+                    </span>
+                  </div>
+                  <span class="text-slate-400 font-medium">{{ formatDate(audit.created_at) }}</span>
+                </div>
+
+                <!-- Submission Snippet -->
+                <p class="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                  {{ audit.content }}
+                </p>
+
+                <!-- Reviewer Notes if resolved -->
+                <div v-if="audit.reviewer_note" class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs italic text-slate-650">
+                  <strong>Moderator Notes:</strong> "{{ audit.reviewer_note }}"
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none">
+          <div class="relative flex items-center justify-center mb-6">
+            <div class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"></div>
+            <div class="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md">
+              <svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800 mb-2">Select a submitter from the directory</h2>
+          <p class="text-sm text-slate-400 max-w-sm leading-relaxed">
+            Click on any submitter profile card in the left list view to audit their complete history, view approval metrics, and trigger ban states.
+          </p>
+        </div>
+      </main>
+    </div>
+
     <!-- Submit modal component -->
     <SubmitItemModal 
       :isOpen="isModalOpen" 
@@ -445,12 +741,13 @@
       @submitted="handleItemSubmitted"
     />
 
-    <!-- Rejection Email Modal component -->
+    <!-- Rejection & Ban Email Modal component -->
     <RejectionEmailModal 
       :isOpen="isRejectionEmailModalOpen" 
       :item="activeItem"
       :reviewerNote="reviewNote"
       :prefetchedDraft="activeItem ? prefetchedDrafts[activeItem.id] : null"
+      :isBan="isBanModalEscalated"
       @close="isRejectionEmailModalOpen = false" 
       @confirm="handleRejectionConfirmed"
     />
@@ -463,9 +760,12 @@ import axios from 'axios';
 import SubmitItemModal from './SubmitItemModal.vue';
 import RejectionEmailModal from './RejectionEmailModal.vue';
 
-// Local Reactive State
+// Tab controls
+const activeTab = ref('queue'); // Tabs: 'queue' or 'users'
+
+// Local Queue State
 const items = ref([]);
-const counts = ref({ all: 0, pending: 0, approved: 0, rejected: 0 });
+const counts = ref({ all: 0, pending: 0, approved: 0, rejected: 0, blocked: 0 });
 const activeItemId = ref(null);
 const loading = ref(false);
 const actioning = ref(false);
@@ -473,19 +773,147 @@ const reviewNote = ref('');
 const isModalOpen = ref(false);
 const isRejectionEmailModalOpen = ref(false);
 const isRejectDropdownOpen = ref(false);
+const isManualBanForced = ref(false); // Flags if a ban modal was forced from dropdown manual ban
 const prefetchedDrafts = ref({});
 
-// Proactively prefetch a rejection email draft in the background using local AI or fallbacks
+// User Directory Directory State
+const users = ref([]);
+const usersLoading = ref(false);
+const activeUserEmail = ref(null);
+const userHistoryDetails = ref(null);
+const userHistoryLoading = ref(false);
+
+const filters = reactive({
+  search: '',
+  status: 'pending',
+  sort: 'newest'
+});
+
+const userFilters = reactive({
+  search: '',
+  sort: 'violations'
+});
+
+// Strike auto-suggestion escalation checks
+const isBanEscalated = computed(() => {
+  return activeItem.value && 
+         activeItem.value.status === 'pending' &&
+         activeItem.value.author_rejections_count >= 3 && 
+         activeItem.value.auto_suggestion === 'reject';
+});
+
+// Decides if modal operates in suspension or rejection notice layout
+const isBanModalEscalated = computed(() => {
+  return isBanEscalated.value || isManualBanForced.value;
+});
+
+// Computed Active Queue Item detail
+const activeItem = computed(() => {
+  return items.value.find(item => item.id === activeItemId.value) || null;
+});
+
+// Set Status Tab filter
+const setStatusFilter = (status) => {
+  filters.status = status;
+  fetchItems();
+};
+
+// Fetch items from queue API
+const fetchItems = async () => {
+  loading.value = true;
+  try {
+    const response = await axios.get('/api/items', { params: filters });
+    items.value = response.data.items;
+    counts.value = response.data.counts;
+
+    if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
+      activeItemId.value = null;
+    }
+
+    if (!activeItemId.value && items.value.length > 0) {
+      activeItemId.value = items.value[0].id;
+    }
+  } catch (err) {
+    console.error('Error fetching review items:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Fetch users directory list
+const fetchUsers = async () => {
+  usersLoading.value = true;
+  try {
+    const response = await axios.get('/api/users', { params: userFilters });
+    users.value = response.data.users;
+    
+    if (activeUserEmail.value && !users.value.some(u => u.author_email === activeUserEmail.value)) {
+      activeUserEmail.value = null;
+    }
+  } catch (err) {
+    console.error('Error fetching user directory:', err);
+  } finally {
+    usersLoading.value = false;
+  }
+};
+
+// Select user in Directory list
+const selectUser = async (email) => {
+  activeUserEmail.value = email;
+  userHistoryLoading.value = true;
+  try {
+    const response = await axios.get(`/api/users/${email}/history`);
+    userHistoryDetails.value = response.data;
+  } catch (err) {
+    console.error('Failed to load user history:', err);
+  } finally {
+    userHistoryLoading.value = false;
+  }
+};
+
+// Toggle ban state on Directory timeline card
+const toggleUserBan = async () => {
+  if (!activeUserEmail.value) return;
+  const isCurrentlyBanned = userHistoryDetails.value?.is_banned;
+  const nextAction = isCurrentlyBanned ? 'unban' : 'ban';
+  
+  try {
+    await axios.post('/api/users/ban', {
+      email: activeUserEmail.value,
+      action: nextAction,
+      reason: 'Banned manually via User reputation directory.'
+    });
+    
+    // Refresh states
+    await selectUser(activeUserEmail.value);
+    await fetchUsers();
+  } catch (err) {
+    console.error('Failed to toggle ban state:', err);
+  }
+};
+
+// Triggers rejection modal opening
+const openRejectionEmailModal = () => {
+  isManualBanForced.value = false;
+  isRejectionEmailModalOpen.value = true;
+};
+
+// Triggers manual ban modal opening via split button dropdown
+const openBanEmailModalDirect = () => {
+  isRejectDropdownOpen.value = false;
+  isManualBanForced.value = true;
+  isRejectionEmailModalOpen.value = true;
+};
+
+// Proactively prefetch rejection draft
 const prefetchRejectionDraft = async (item) => {
   if (!item || item.status !== 'pending') return;
   
   const currentNote = reviewNote.value;
-  // Skip if already prefetching or loaded for the exact same reviewer note text
   if (prefetchedDrafts.value[item.id] && prefetchedDrafts.value[item.id].note === currentNote) {
     return;
   }
 
-  // Set local state to loading with the tracked note content
   prefetchedDrafts.value[item.id] = { loading: true, draft: '', note: currentNote };
 
   try {
@@ -499,12 +927,11 @@ const prefetchRejectionDraft = async (item) => {
     };
   } catch (err) {
     console.error('Failed to prefetch rejection email draft:', err);
-    // Remove from dict on failure so a retry can trigger if needed
     delete prefetchedDrafts.value[item.id];
   }
 };
 
-// Proactively trigger draft generation in the background whenever selected item changes
+// Proactively trigger draft prefetching when selection changes
 watch(activeItemId, (newId) => {
   if (newId) {
     const item = items.value.find(i => i.id === newId);
@@ -514,48 +941,7 @@ watch(activeItemId, (newId) => {
   }
 }, { immediate: true });
 
-const filters = reactive({
-  search: '',
-  status: 'pending', // Default view is pending queue
-  sort: 'newest'
-});
-
-// Computed Active Item detail
-const activeItem = computed(() => {
-  return items.value.find(item => item.id === activeItemId.value) || null;
-});
-
-// Set Status Tab filter
-const setStatusFilter = (status) => {
-  filters.status = status;
-  fetchItems();
-};
-
-// Fetch items from backend API
-const fetchItems = async () => {
-  loading.value = true;
-  try {
-    const response = await axios.get('/api/items', { params: filters });
-    items.value = response.data.items;
-    counts.value = response.data.counts;
-
-    // Reset active item if it is no longer in the fetched list
-    if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
-      activeItemId.value = null;
-    }
-
-    // Auto-select the first pending/item if none is selected
-    if (!activeItemId.value && items.value.length > 0) {
-      activeItemId.value = items.value[0].id;
-    }
-  } catch (err) {
-    console.error('Error fetching review items:', err);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Select a specific card
+// Select card item in left sidebar queue
 const selectItem = (id) => {
   activeItemId.value = id;
   reviewNote.value = '';
@@ -566,6 +952,7 @@ const formatFlagName = (flag) => {
   if (flag === 'financial_keywords') return 'Financial Keywords';
   if (flag === 'external_links') return 'External Links';
   if (flag === 'urgent_language') return 'Urgent Intent';
+  if (flag === 'banned_author') return 'Banned Author';
   return flag;
 };
 
@@ -590,7 +977,7 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
-// Submit Item review resolution (Approve / Reject) with Optimistic UI updates
+// Review submission resolutions
 const submitReview = async (status) => {
   if (!activeItemId.value) return;
 
@@ -598,7 +985,7 @@ const submitReview = async (status) => {
   const currentId = activeItemId.value;
   const nextItem = getNextPendingItemAfter(currentId);
 
-  // Optimistic UI update: instantly transition the status locally
+  // Optimistic UI updates
   const currentItemIndex = items.value.findIndex(item => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = status;
@@ -606,7 +993,6 @@ const submitReview = async (status) => {
     items.value[currentItemIndex].reviewed_at = new Date().toISOString();
   }
 
-  // Instantly slide selection to the next pending item in the queue for smooth reviewer flow
   if (nextItem) {
     activeItemId.value = nextItem.id;
   } else {
@@ -620,22 +1006,18 @@ const submitReview = async (status) => {
   reviewNote.value = '';
 
   try {
-    // Send PATCH review request asynchronously
     await axios.patch(`/api/items/${currentId}/review`, payload);
-    
-    // Refresh the actual queue status list silently in the background
     await fetchItemsSilent();
   } catch (err) {
     console.error('Failed to submit review resolution:', err);
-    // Revert if error occurs (optional, just trigger full fetch)
     fetchItems();
   } finally {
     actioning.value = false;
   }
 };
 
-// Handle rejection confirmation after email preview and customization
-const handleRejectionConfirmed = async ({ sendEmail, emailBody }) => {
+// Handle modal-confirmed rejection/ban actions
+const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReason }) => {
   isRejectionEmailModalOpen.value = false;
   if (!activeItemId.value) return;
 
@@ -643,15 +1025,17 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody }) => {
   const currentId = activeItemId.value;
   const nextItem = getNextPendingItemAfter(currentId);
 
-  // Optimistic UI update
+  // Optimistic UI updates
   const currentItemIndex = items.value.findIndex(item => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = 'rejected';
     items.value[currentItemIndex].reviewer_note = reviewNote.value;
     items.value[currentItemIndex].reviewed_at = new Date().toISOString();
+    if (banUser) {
+      items.value[currentItemIndex].author_is_banned = 1;
+    }
   }
 
-  // Instantly slide selection to the next pending item in the queue
   if (nextItem) {
     activeItemId.value = nextItem.id;
   } else {
@@ -662,7 +1046,9 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody }) => {
     status: 'rejected',
     reviewer_note: reviewNote.value,
     send_email: sendEmail,
-    email_body: emailBody
+    email_body: emailBody,
+    ban_user: banUser,
+    ban_reason: banReason
   };
   reviewNote.value = '';
 
@@ -674,10 +1060,11 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody }) => {
     fetchItems();
   } finally {
     actioning.value = false;
+    isManualBanForced.value = false;
   }
 };
 
-// Perform silent, instant content rejection bypassing the email modal entirely
+// Silent immediate content rejection
 const submitReviewSilently = async () => {
   isRejectDropdownOpen.value = false;
   if (!activeItemId.value) return;
@@ -686,7 +1073,7 @@ const submitReviewSilently = async () => {
   const currentId = activeItemId.value;
   const nextItem = getNextPendingItemAfter(currentId);
 
-  // Optimistic UI update
+  // Optimistic UI updates
   const currentItemIndex = items.value.findIndex(item => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = 'rejected';
@@ -694,7 +1081,6 @@ const submitReviewSilently = async () => {
     items.value[currentItemIndex].reviewed_at = new Date().toISOString();
   }
 
-  // Instantly slide selection to the next pending item in the queue
   if (nextItem) {
     activeItemId.value = nextItem.id;
   } else {
@@ -719,19 +1105,16 @@ const submitReviewSilently = async () => {
   }
 };
 
-// Get the next item to review
 const getNextPendingItemAfter = (currentItemId) => {
   const currentIdx = items.value.findIndex(item => item.id === currentItemId);
   if (currentIdx === -1) return null;
 
-  // Search forward for the next pending item
   for (let i = currentIdx + 1; i < items.value.length; i++) {
     if (items.value[i].status === 'pending') {
       return items.value[i];
     }
   }
 
-  // If none found forward, search backward from current index
   for (let i = currentIdx - 1; i >= 0; i--) {
     if (items.value[i].status === 'pending') {
       return items.value[i];
@@ -740,14 +1123,13 @@ const getNextPendingItemAfter = (currentItemId) => {
   return null;
 };
 
-// Silently refresh items counts and lists
+// Silent background sync
 const fetchItemsSilent = async () => {
   try {
     const response = await axios.get('/api/items', { params: filters });
     items.value = response.data.items;
     counts.value = response.data.counts;
 
-    // Reselect the active item if it is still valid
     if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
       if (items.value.length > 0) {
         activeItemId.value = items.value[0].id;
@@ -760,16 +1142,11 @@ const fetchItemsSilent = async () => {
   }
 };
 
-// Callback when SubmitItemModal submits successfully
 const handleItemSubmitted = (newItem) => {
-  // Add item locally to the active queue if it matches active filters
   if (filters.status === 'all' || filters.status === 'pending') {
-    // Prepend newly created item instantly to the top of the list for visual confirmation
     items.value.unshift(newItem);
-    activeItemId.value = newItem.id; // Auto select the newly created item
+    activeItemId.value = newItem.id;
   }
-  
-  // Refresh standard counts and list states silently to align with sorting configurations
   fetchItemsSilent();
 };
 
@@ -806,3 +1183,4 @@ onUnmounted(() => {
   background: #475569;
 }
 </style>
+
