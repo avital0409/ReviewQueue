@@ -119,7 +119,8 @@ import axios from 'axios';
 const props = defineProps({
   isOpen: Boolean,
   item: Object,
-  reviewerNote: String
+  reviewerNote: String,
+  prefetchedDraft: Object
 });
 
 const emit = defineEmits(['close', 'confirm']);
@@ -131,6 +132,27 @@ const submitting = ref(false);
 
 const generateDraft = async () => {
   if (!props.item) return;
+
+  // Use prefetched draft if available!
+  if (props.prefetchedDraft) {
+    if (props.prefetchedDraft.loading) {
+      loadingDraft.value = true;
+      // Define a one-time watch on the loading status
+      const unwatch = watch(() => props.prefetchedDraft?.loading, (loading) => {
+        if (!loading) {
+          emailBody.value = props.prefetchedDraft?.draft || '';
+          loadingDraft.value = false;
+          unwatch();
+        }
+      });
+      return;
+    } else if (props.prefetchedDraft.draft) {
+      emailBody.value = props.prefetchedDraft.draft;
+      loadingDraft.value = false;
+      return;
+    }
+  }
+
   loadingDraft.value = true;
   try {
     const response = await axios.post(`/api/items/${props.item.id}/rejection-draft`, {
@@ -145,7 +167,7 @@ const generateDraft = async () => {
   }
 };
 
-// Whenever modal opens, generate a fresh dynamic draft
+// Whenever modal opens, generate or bind pre-fetched draft
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     sendEmail.value = true;

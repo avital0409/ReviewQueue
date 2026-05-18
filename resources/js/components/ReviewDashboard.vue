@@ -450,6 +450,7 @@
       :isOpen="isRejectionEmailModalOpen" 
       :item="activeItem"
       :reviewerNote="reviewNote"
+      :prefetchedDraft="activeItem ? prefetchedDrafts[activeItem.id] : null"
       @close="isRejectionEmailModalOpen = false" 
       @confirm="handleRejectionConfirmed"
     />
@@ -457,7 +458,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import SubmitItemModal from './SubmitItemModal.vue';
 import RejectionEmailModal from './RejectionEmailModal.vue';
@@ -472,6 +473,46 @@ const reviewNote = ref('');
 const isModalOpen = ref(false);
 const isRejectionEmailModalOpen = ref(false);
 const isRejectDropdownOpen = ref(false);
+const prefetchedDrafts = ref({});
+
+// Proactively prefetch a rejection email draft in the background using local AI or fallbacks
+const prefetchRejectionDraft = async (item) => {
+  if (!item || item.status !== 'pending') return;
+  
+  const currentNote = reviewNote.value;
+  // Skip if already prefetching or loaded for the exact same reviewer note text
+  if (prefetchedDrafts.value[item.id] && prefetchedDrafts.value[item.id].note === currentNote) {
+    return;
+  }
+
+  // Set local state to loading with the tracked note content
+  prefetchedDrafts.value[item.id] = { loading: true, draft: '', note: currentNote };
+
+  try {
+    const response = await axios.post(`/api/items/${item.id}/rejection-draft`, {
+      reviewer_note: currentNote
+    });
+    prefetchedDrafts.value[item.id] = {
+      loading: false,
+      draft: response.data.draft || '',
+      note: currentNote
+    };
+  } catch (err) {
+    console.error('Failed to prefetch rejection email draft:', err);
+    // Remove from dict on failure so a retry can trigger if needed
+    delete prefetchedDrafts.value[item.id];
+  }
+};
+
+// Proactively trigger draft generation in the background whenever selected item changes
+watch(activeItemId, (newId) => {
+  if (newId) {
+    const item = items.value.find(i => i.id === newId);
+    if (item && item.status === 'pending') {
+      prefetchRejectionDraft(item);
+    }
+  }
+}, { immediate: true });
 
 const filters = reactive({
   search: '',
