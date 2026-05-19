@@ -11,11 +11,17 @@ class GeminiService
 
     public function __construct()
     {
-        // Try to fetch from Laravel's parsed .env first, then fall back to OS getenv()
-        $this->apiKey = env('GEMINI_API_KEY') ?: getenv('GEMINI_API_KEY');
+        // Try config first, then env(), then local-only OS variable, then standard OS variable
+        $this->apiKey = config('services.gemini.key')
+            ?: (env('GEMINI_API_KEY')
+            ?: (getenv('GEMINI_API_KEY', true)
+            ?: getenv('GEMINI_API_KEY')));
 
         if (empty($this->apiKey)) {
             $this->apiKey = null;
+            Log::warning('[GeminiService] Constructor resolved apiKey as NULL or EMPTY.');
+        } else {
+            Log::info('[GeminiService] Constructor resolved apiKey successfully. Prefix: '.substr($this->apiKey, 0, 6).'...');
         }
     }
 
@@ -51,10 +57,10 @@ class GeminiService
         }
 
         try {
-            Log::info('[GeminiService] Dispatching POST request to Gemini API (gemini-1.5-flash)...');
+            Log::info('[GeminiService] Dispatching POST request to Gemini API (gemini-3-flash-preview)...');
 
-            $response = Http::timeout(20)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$this->apiKey}",
+            $response = Http::timeout(60)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={$this->apiKey}",
                 [
                     'contents' => [
                         [

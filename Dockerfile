@@ -37,5 +37,6 @@ RUN mkdir -p database && touch database/database.sqlite && chmod -R 777 database
 
 # Run entry point commands and serve
 EXPOSE 8000
-CMD cp -n .env.example .env && sed -i '/GEMINI_API_KEY=/d' .env && php artisan key:generate --no-interaction && php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000
+CMD cp -n .env.example .env && sed -i '/GEMINI_API_KEY=/d' .env && echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env && php artisan key:generate --no-interaction && php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000
+
 
