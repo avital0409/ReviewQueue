@@ -47,12 +47,18 @@ class OllamaService
             2. An urgent operational account issue (e.g. locked account, unauthorized transaction alert).
             3. A safe, polite, professional support ticket or user message.
 
-            Return your response ONLY in valid JSON format matching this schema:
+            Do NOT return a schema or template definition. Instead, return a single concrete instance of a submission with real mock content.
+            Return your response ONLY as a raw JSON object containing exactly two keys:
+            - \"email\": a realistic, creative email address matching the chosen persona.
+            - \"content\": the fully-written message or post body (at least 2-3 sentences).
+
+            Example output structure:
             {
-              \"email\": \"author email address matching the persona\",
-              \"content\": \"the actual creative, fully-written body content\"
+              \"email\": \"crypto-trader42@gmail.net\",
+              \"content\": \"Urgent: Please check our new decentralized farming pool. We have 500% APY available for the next 24 hours only. Join now at pool-yield.com!\"
             }
-            Do not include any markdown code block wrappers. Return raw JSON.";
+
+            Do not include any markdown code block wrappers, explanations, or trailing characters. Return only the raw JSON object.";
 
             // Auto-detect installed models in Ollama to ensure zero configuration friction
             $modelsResponse = Http::timeout(2)->get("{$this->ollamaUrl}/api/tags");
@@ -203,8 +209,8 @@ class OllamaService
             
             Instructions:
             - Write in a firm, formal, clear, and highly professional tone.
-            - Explicitly state that their email '{$email}' is permanently banned from making future submissions.
-            - Clarify that their account/email address has been permanently suspended due to repeated guidelines violations (reaching Strike 4).
+            - Explicitly state that their email '{$email}' is banned from making future submissions.
+            - Clarify that their account/email address has been permanently suspended due to repeated guidelines violations (reaching Strike 3).
             - Explain the suspension based on the moderator's notes and the violating content.
             - Do not include subject lines, markdown signatures, or HTML templates.
             - NEVER use ANY bracketed placeholders or template variables (e.g., '[User]', '[User Name]', '[Name]', '[Date]', '[Your Name]', '[Community Name]', '[insert...]'). All text must be fully written out, literal, and complete.
