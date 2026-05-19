@@ -33,14 +33,18 @@ class GeminiService
         return ! empty($this->apiKey);
     }
 
-    /**
-     * Clean markdown wrappers from LLM JSON responses.
-     */
     protected function cleanJsonText(string $text): string
     {
         $text = preg_replace('/^```json\s*/i', '', $text);
         $text = preg_replace('/^```\s*/i', '', $text);
         $text = preg_replace('/```\s*$/i', '', $text);
+        $text = trim($text);
+
+        $firstBrace = strpos($text, '{');
+        $lastBrace = strrpos($text, '}');
+        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+            $text = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
+        }
 
         return trim($text);
     }
@@ -48,7 +52,7 @@ class GeminiService
     /**
      * Dispatch prompt request directly to Google Gemini API (gemini-1.5-flash).
      */
-    protected function callGemini(string $prompt): ?string
+    protected function callGemini(string $prompt, array $generationConfig = []): ?string
     {
         if (! $this->isGeminiAvailable()) {
             Log::warning('[GeminiService] Gemini API key is missing or not configured.');
@@ -59,17 +63,23 @@ class GeminiService
         try {
             Log::info('[GeminiService] Dispatching POST request to Gemini API (gemini-3-flash-preview)...');
 
-            $response = Http::timeout(60)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={$this->apiKey}",
-                [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                ['text' => $prompt],
-                            ],
+            $payload = [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
                         ],
                     ],
-                ]
+                ],
+            ];
+
+            if (! empty($generationConfig)) {
+                $payload['generationConfig'] = $generationConfig;
+            }
+
+            $response = Http::timeout(60)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={$this->apiKey}",
+                $payload
             );
 
             if ($response->successful()) {
@@ -100,7 +110,9 @@ class GeminiService
             throw new \Exception('Gemini API is not configured or active.');
         }
 
-        $prompt = 'Generate a creative, highly realistic post or ticket submission for a content moderation queue.
+        $prompt = 'CRITICAL: You must output ONLY the raw JSON object starting directly with \'{\' and ending with \'}\'. Do NOT write any introductory remarks, conversational prefaces, explanations, notes, or markdown code block wrappers (do NOT use ```json). Any text outside the bounding braces will break the system.
+
+        Generate a creative, highly realistic post or ticket submission for a content moderation queue.
         Choose randomly between these three types:
         1. A highly sophisticated crypto, yield-farming, or bitcoin phishing spam.
         2. An urgent operational account issue (e.g. locked account, unauthorized transaction alert).
@@ -115,11 +127,13 @@ class GeminiService
         {
           "email": "crypto-trader42@gmail.net",
           "content": "Urgent: Please check our new decentralized farming pool. We have 500% APY available for the next 24 hours only. Join now at pool-yield.com!"
-        }
+        }';
 
-        Do not include any markdown code block wrappers, explanations, or trailing characters. Return only the raw JSON object.';
-
-        $resultText = $this->callGemini($prompt);
+        $resultText = $this->callGemini($prompt, [
+            'responseMimeType' => 'application/json',
+            'temperature' => 0.0,
+            'maxOutputTokens' => 1000,
+        ]);
 
         if ($resultText) {
             $cleaned = $this->cleanJsonText($resultText);
@@ -169,7 +183,10 @@ class GeminiService
         - Sign the email strictly as 'ReviewQueue Moderation Hub'. Do not leave placeholders for your name or the community name.
         - Return ONLY the drafted body text of the email starting with a greeting and ending with a signature.";
 
-        $result = $this->callGemini($prompt);
+        $result = $this->callGemini($prompt, [
+            'maxOutputTokens' => 1500,
+            'temperature' => 0.7,
+        ]);
 
         if ($result && ! empty($result)) {
             Log::info('[GeminiService] Successfully generated custom rejection email draft.');
@@ -214,7 +231,10 @@ class GeminiService
         - Do not write dynamic date placeholders like '[Date]'. If referring to a date or time, refer to it generally as 'recently' or 'in your recent submissions'.
         - Return ONLY the drafted body text of the email starting with a formal greeting and ending with a signature.";
 
-        $result = $this->callGemini($prompt);
+        $result = $this->callGemini($prompt, [
+            'maxOutputTokens' => 1500,
+            'temperature' => 0.7,
+        ]);
 
         if ($result && ! empty($result)) {
             Log::info('[GeminiService] Successfully generated custom suspension/ban email draft.');

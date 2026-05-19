@@ -121,7 +121,7 @@
             >
             <button
               class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-              @click="generateDraft"
+              @click="generateDraft(true)"
             >
               <span>✨</span> Regenerate AI Draft
             </button>
@@ -193,16 +193,17 @@ const sendEmail = ref(true);
 const loadingDraft = ref(false);
 const submitting = ref(false);
 
-const generateDraft = async () => {
+const generateDraft = async (force = false) => {
   if (!props.item) return;
   console.log('[RejectionEmailModal] generateDraft initiated:', {
     itemId: props.item.id,
     isBan: props.isBan,
     reviewerNote: props.reviewerNote,
+    force,
   });
 
   // Use prefetched draft if available and NOT in ban mode (re-fetch to format suspension rules)
-  if (props.prefetchedDraft && !props.isBan && props.prefetchedDraft.note === props.reviewerNote) {
+  if (!force && props.prefetchedDraft && !props.isBan && props.prefetchedDraft.note === props.reviewerNote) {
     if (props.prefetchedDraft.loading) {
       console.log('[RejectionEmailModal] Re-using loading pre-fetched draft stream...');
       loadingDraft.value = true;
