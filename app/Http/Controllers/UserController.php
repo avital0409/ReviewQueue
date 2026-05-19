@@ -88,6 +88,8 @@ class UserController extends Controller
         $action = $request->input('action');
         $reason = $request->input('reason', 'Repeated policy violations (exceeded Strike 3 threshold).');
 
+        $blockedCount = 0;
+
         if ($action === 'ban') {
             DB::table('banned_users')->updateOrInsert(
                 ['email' => $email],
@@ -98,13 +100,23 @@ class UserController extends Controller
                     'updated_at' => now()
                 ]
             );
+
+            // Automatically block all pending items of this banned user
+            $blockedCount = Item::where('author_email', $email)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'blocked',
+                    'reviewer_note' => 'Automatically blocked: submitter banned.',
+                    'reviewed_at' => now(),
+                ]);
         } else {
             DB::table('banned_users')->where('email', $email)->delete();
         }
 
         return response()->json([
             'success' => true,
-            'message' => $action === 'ban' ? 'User permanently banned successfully.' : 'Ban lifted successfully.'
+            'message' => $action === 'ban' ? 'User banned successfully.' : 'Ban lifted successfully.',
+            'blocked_count' => $blockedCount,
         ]);
     }
 }

@@ -116,7 +116,7 @@ class ItemController extends Controller
                 'risk_score' => 100,
                 'heuristic_flags' => ['banned_author'],
                 'auto_suggestion' => 'reject',
-                'reviewer_note' => 'Auto-rejected: Submitter is permanently banned.',
+                'reviewer_note' => 'Auto-rejected: Submitter is banned.',
                 'reviewed_at' => now(),
             ]);
             
@@ -126,13 +126,22 @@ class ItemController extends Controller
         // 2. Standard heuristic scan pipeline
         $analysis = $engine->analyze($validated['content']);
 
+        $rejectionsCount = Item::where('author_email', $validated['author_email'])
+            ->where('status', 'rejected')
+            ->count();
+
+        $autoSuggestion = $analysis['auto_suggestion'];
+        if ($rejectionsCount >= 2 && $autoSuggestion !== 'approve') {
+            $autoSuggestion = 'ban';
+        }
+
         $item = Item::create([
             'author_email' => $validated['author_email'],
             'content' => $validated['content'],
             'status' => 'pending',
             'risk_score' => $analysis['risk_score'],
             'heuristic_flags' => $analysis['heuristic_flags'],
-            'auto_suggestion' => $analysis['auto_suggestion'],
+            'auto_suggestion' => $autoSuggestion,
         ]);
 
         return response()->json($item, 201);
@@ -160,6 +169,8 @@ class ItemController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        $blockedCount = 0;
+
         // 1. Process Permanent Ban Escalation
         if ($request->status === 'rejected' && $request->input('ban_user')) {
             $banReason = $request->input('ban_reason') ?: $request->reviewer_note ?: 'Repeated policy violations (Strike 3 exceeded).';
@@ -181,6 +192,16 @@ class ItemController extends Controller
                     $item->content
                 ));
             }
+
+            // Automatically block the rest of their pending items
+            $blockedCount = Item::where('author_email', $item->author_email)
+                ->where('status', 'pending')
+                ->where('id', '!=', $item->id)
+                ->update([
+                    'status' => 'blocked',
+                    'reviewer_note' => 'Automatically blocked: submitter banned.',
+                    'reviewed_at' => now(),
+                ]);
         } 
         // 2. Process Standard Rejection Notice
         elseif ($request->status === 'rejected' && $request->input('send_email')) {
@@ -188,7 +209,10 @@ class ItemController extends Controller
             Mail::to($item->author_email)->send(new ItemRejectedMail($item->content, $emailBody));
         }
 
-        return response()->json($item);
+        $responseData = $item->toArray();
+        $responseData['blocked_count'] = $blockedCount;
+
+        return response()->json($responseData);
     }
 
     /**

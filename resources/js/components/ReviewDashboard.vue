@@ -249,9 +249,8 @@
 
           <!-- Detail Body Scrollable -->
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <!-- Strike warning prompt banner -->
             <div 
-              v-if="activeItem.author_rejections_count >= 3 && activeItem.status === 'pending'" 
+              v-if="activeItem.author_rejections_count >= 2 && activeItem.status === 'pending'" 
               class="p-4 rounded-2xl border flex items-center gap-3.5 shadow-sm transform transition-all duration-300 animate-pulse"
               :class="isBanEscalated ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'"
             >
@@ -262,7 +261,7 @@
                 </div>
                 <div class="text-xs">
                   Submitter has <strong>{{ activeItem.author_rejections_count }} prior rejections</strong>.
-                  {{ isBanEscalated ? 'This post triggers rejection recommendations. Rejecting this content will permanently ban this user from submissions.' : 'Exercise caution. Further rejections will result in a permanent ban.' }}
+                  {{ isBanEscalated ? 'This post triggers rejection recommendations. Rejecting this content will ban this user from submissions.' : 'Exercise caution. Further rejections will result in a permanent ban.' }}
                 </div>
               </div>
             </div>
@@ -326,12 +325,12 @@
                 <div class="my-4 flex items-center gap-3">
                   <div :class="[
                     'h-12 w-12 rounded-xl flex items-center justify-center border',
-                    isBanEscalated ? 'bg-red-600 text-white border-red-700 animate-pulse' : '',
+                    isBanEscalated ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : '',
                     !isBanEscalated && activeItem.auto_suggestion === 'reject' ? 'bg-red-50 text-red-600 border-red-100' : '',
                     activeItem.auto_suggestion === 'approve' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
                     activeItem.auto_suggestion === 'none' ? 'bg-slate-50 text-slate-500 border-slate-200' : ''
                   ]">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg :class="['h-6 w-6', isBanEscalated ? 'text-red-600' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path v-if="isBanEscalated" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       <path v-else-if="activeItem.auto_suggestion === 'reject'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       <path v-else-if="activeItem.auto_suggestion === 'approve'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -450,7 +449,7 @@
                 @click="isRejectDropdownOpen = !isRejectDropdownOpen"
                 :disabled="actioning"
                 class="inline-flex items-center px-3 rounded-r-xl text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                :class="isBanEscalated ? 'bg-gradient-to-r from-rose-750 to-rose-750 hover:from-rose-700 hover:to-rose-700' : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'"
+                :class="isBanEscalated ? 'bg-gradient-to-r from-rose-700 to-rose-700 hover:from-rose-600 hover:to-rose-600' : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'"
               >
                 <svg class="h-3 w-3 transform transition-transform duration-250" :class="{ 'rotate-180': isRejectDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -605,7 +604,7 @@
                 'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
                 user.is_banned ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'
               ]">
-                {{ user.is_banned ? 'Permanently Banned' : 'Active Account' }}
+                {{ user.is_banned ? 'Banned' : 'Active Account' }}
               </span>
             </div>
 
@@ -671,7 +670,7 @@
               class="p-5 rounded-2xl border border-red-200 bg-red-50/50 text-red-800 shadow-inner flex flex-col gap-1.5"
             >
               <div class="text-sm font-extrabold flex items-center gap-2">
-                <span>🚫</span> USER PERMANENTLY BANNED
+                <span>🚫</span> USER BANNED
               </div>
               <p class="text-xs text-red-700">
                 Suspended at <strong>{{ formatDate(userHistoryDetails.banned_at) }}</strong>.
@@ -797,6 +796,49 @@
       @close="isRejectionEmailModalOpen = false" 
       @confirm="handleRejectionConfirmed"
     />
+
+    <!-- Toast Notification Stack -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+      <TransitionGroup 
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+        enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-for="toast in notifications" 
+          :key="toast.id"
+          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border border-slate-100 bg-white/90 backdrop-blur-md p-4 shadow-xl shadow-slate-200/50 flex items-start gap-3"
+        >
+          <div :class="[
+            'h-8 w-8 rounded-xl flex items-center justify-center border shrink-0',
+            toast.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
+            toast.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' : '',
+            toast.type === 'error' ? 'bg-rose-50 text-rose-600 border-rose-100' : ''
+          ]">
+            <svg v-if="toast.type === 'success'" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4" />
+            </svg>
+            <svg v-else class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="flex-1 space-y-0.5 pt-0.5">
+            <p class="text-xs font-bold text-slate-700 leading-normal">{{ toast.message }}</p>
+          </div>
+          <button 
+            @click="notifications = notifications.filter(n => n.id !== toast.id)"
+            class="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </TransitionGroup>
+    </div>
   </div>
 </template>
 
@@ -821,6 +863,16 @@ const isRejectionEmailModalOpen = ref(false);
 const isRejectDropdownOpen = ref(false);
 const isManualBanForced = ref(false); // Flags if a ban modal was forced from dropdown manual ban
 const prefetchedDrafts = ref({});
+
+// Premium Toast Notifications State
+const notifications = ref([]);
+const showToast = (message, type = 'success') => {
+  const id = Date.now() + Math.random().toString(36).substr(2, 9);
+  notifications.value.push({ id, message, type });
+  setTimeout(() => {
+    notifications.value = notifications.value.filter(n => n.id !== id);
+  }, 4500);
+};
 
 // User Directory Directory State
 const users = ref([]);
@@ -848,8 +900,8 @@ const userFilters = reactive({
 const isBanEscalated = computed(() => {
   return activeItem.value && 
          activeItem.value.status === 'pending' &&
-         activeItem.value.author_rejections_count >= 3 && 
-         activeItem.value.auto_suggestion === 'reject';
+         activeItem.value.author_rejections_count >= 2 && 
+         activeItem.value.auto_suggestion !== 'approve';
 });
 
 // Decides if modal operates in suspension or rejection notice layout
@@ -940,7 +992,7 @@ const toggleUserBan = async () => {
   const nextAction = isCurrentlyBanned ? 'unban' : 'ban';
   
   try {
-    await axios.post('/api/users/ban', {
+    const res = await axios.post('/api/users/ban', {
       email: activeUserEmail.value,
       action: nextAction,
       reason: 'Banned manually via User reputation directory.'
@@ -949,8 +1001,20 @@ const toggleUserBan = async () => {
     // Refresh states
     await selectUser(activeUserEmail.value);
     await fetchUsers();
+    await fetchItemsSilent();
+
+    if (nextAction === 'ban') {
+      let msg = 'User permanently suspended!';
+      if (res.data && res.data.blocked_count > 0) {
+        msg += ` ${res.data.blocked_count} pending submissions automatically blocked.`;
+      }
+      showToast(msg, 'warning');
+    } else {
+      showToast('Suspension lifted successfully!', 'success');
+    }
   } catch (err) {
     console.error('Failed to toggle ban state:', err);
+    showToast('Failed to change suspension state.', 'error');
   }
 };
 
@@ -1065,9 +1129,11 @@ const submitReview = async (status) => {
 
   try {
     await axios.patch(`/api/items/${currentId}/review`, payload);
+    showToast(`Submission #${currentId} approved successfully!`, 'success');
     await fetchItemsSilent();
   } catch (err) {
     console.error('Failed to submit review resolution:', err);
+    showToast('Failed to approve submission.', 'error');
     fetchItems();
   } finally {
     actioning.value = false;
@@ -1107,10 +1173,22 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
   reviewNote.value = '';
 
   try {
-    await axios.patch(`/api/items/${currentId}/review`, payload);
+    const res = await axios.patch(`/api/items/${currentId}/review`, payload);
+    
+    if (banUser) {
+      let msg = `Submission #${currentId} rejected & user permanently suspended!`;
+      if (res.data && res.data.blocked_count > 0) {
+        msg += ` ${res.data.blocked_count} pending items automatically blocked.`;
+      }
+      showToast(msg, 'warning');
+    } else {
+      showToast(`Submission #${currentId} rejected successfully.`, 'success');
+    }
+
     await fetchItemsSilent();
   } catch (err) {
     console.error('Failed to submit review rejection:', err);
+    showToast('Failed to reject submission.', 'error');
     fetchItems();
   } finally {
     actioning.value = false;
@@ -1146,9 +1224,11 @@ const submitReviewSilently = async () => {
 
   try {
     await axios.patch(`/api/items/${currentId}/review`, payload);
+    showToast(`Submission #${currentId} silently rejected.`, 'success');
     await fetchItemsSilent();
   } catch (err) {
     console.error('Failed to submit silent rejection:', err);
+    showToast('Failed to reject submission silently.', 'error');
     fetchItems();
   } finally {
     actioning.value = false;
