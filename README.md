@@ -15,10 +15,12 @@ To build and run the full-stack application instantly in seconds with **absolute
    docker compose up --build
    ```
 
-   > [!TIP]
-   > **AI Integration Setup**: The application utilizes the **Google Gemini API** (`gemini-1.5-flash`) for sub-second, high-performance email draft generation. 
+   > [!IMPORTANT]
+   > **Provide API Key Before Build**: You must obtain a completely free API key from **[Google AI Studio](https://aistudio.google.com)** and define it as `GEMINI_API_KEY=your_key` in your host's `.env` file **BEFORE running `docker compose up --build`**.
    > 
-   > Simply obtain a completely free API key from **[Google AI Studio](https://aistudio.google.com)** and paste it as `GEMINI_API_KEY=your_key` in your `.env` file. If no API key is supplied, the application automatically detects it and gracefully degrades to premium static email templates so the dashboard is fully functional out of the box.
+   > During the container build and startup phase, Laravel's caching mechanisms and persistent config variables are compiled. If the key is not set before the build, the container will run in offline fallback mode. If no API key is supplied, the application automatically detects it and gracefully degrades to premium static email templates so the dashboard remains fully functional out of the box.
+   > 
+   > The application utilizes the state-of-the-art **Google Gemini API** (`gemini-3-flash-preview`) via the `/v1beta` endpoint for lightning-fast, high-performance structured mock item generation and email draft styling.
 
 2. **Access ModHub**:
    Open `http://localhost:8000` in your web browser. Everything is fully pre-configured, database migrations are automatically run, and the seed data is populated!
@@ -113,9 +115,9 @@ The system includes a two-tiered synchronous and asynchronous moderation engine:
 1. **Rule-Based Heuristic Scans (Synchronous)**:
    Upon submission, the text is audited for urgent phrases, financial keywords, suspicious links, excessive casing, and global blacklist states to assign a custom `risk_score` (0–100) and trigger automated tags.
 2. **AI-Driven Sentiment & Auto-Drafting (Google Gemini API Integration)**:
-   Integrates with Google's **Gemini API** (`gemini-1.5-flash`) to perform semantic intent analysis and dynamically draft polite, highly contextual, and custom rejection or suspension warning emails:
-   * **Context-Aware Generation**: When a reviewer rejects an item or bans an account, the backend compiles the submitter's email, the original violating content snippet, and the reviewer's specific custom reason into a structured instruction prompt.
-   * **Custom Prompt Engineering**: Instructs the LLM to write in a constructive, professional tone, explaining the guidelines violation, and strictly forbids bracketed placeholders (e.g. `[User Name]`, `[Date]`), ensuring the drafts are 100% complete and ready to send.
+   Integrates with Google's preview **Gemini API** (`gemini-3-flash-preview` / `/v1beta` endpoint) to perform semantic intent analysis and dynamically draft polite, highly contextual, and custom rejection or suspension warning emails:
+   * **Structured Output Optimization**: Utilizes native JSON decoding (`responseMimeType: 'application/json'`) and deterministic settings (`temperature: 0.0`) to generate raw mock ticket submissions instantly.
+   * **Safety Filter Bypass**: Configured with custom safety overrides (`BLOCK_NONE` thresholds) to ensure the moderation engine can audit and process sensitive or policy-violating text without triggering ethical refusal safeguards.
    * **High-Fidelity Offline Fallback**: If the `GEMINI_API_KEY` is not provided or the API is unreachable, the app automatically detects the fallback state and gracefully drops back to structured, professional static drafts to preserve the moderator's workflow.
 
 ---
@@ -153,8 +155,8 @@ The system includes a two-tiered synchronous and asynchronous moderation engine:
 * **Interactive Rules Creator Panel**: Heuristic violation parameters (financial triggers, word weights, blacklist strings) are defined programmatically. I deferred building an admin control panel UI that allows senior moderators to dynamically add, edit, or remove heuristic check rules on the fly.
 
 ### 🧠 Free Cloud AI (Google Gemini) vs. Self-Hosted / Paid LLMs
-A major architectural choice was using Google's free-tier Gemini API (`gemini-1.5-flash`) instead of local self-hosted options (like Ollama) or other paid cloud APIs (like OpenAI or Anthropic):
-* **Why I Used Gemini**: I optimized for **blazing-fast response speeds (sub-second generation), zero local resource consumption, and zero developer cost**. It completely avoids requiring the evaluator to download massive 4GB local models or run intensive host engines, while offering the most robust and responsive user experience possible.
+A major architectural choice was using Google's free-tier Gemini API (`gemini-3-flash-preview`) instead of local self-hosted options (like Ollama) or other paid cloud APIs (like OpenAI or Anthropic):
+* **Why I Used Gemini**: I optimized for **blazing-fast response speeds, zero local resource consumption, and zero developer cost**. It completely avoids requiring the evaluator to download massive 4GB local models or run intensive host engines, while offering the most robust and responsive user experience possible.
 * **The Resilient Fallback**: If no API key is configured or Google servers are unreachable, the app's internal service caught checks automatically redirect to provide high-fidelity static drafts, making onboarding completely bulletproof.
 
 ---
