@@ -928,6 +928,7 @@ const setStatusFilter = (status) => {
 
 // Fetch items from queue API
 const fetchItems = async () => {
+  console.log('[ReviewDashboard] fetchItems called with active filters:', JSON.stringify(filters));
   loading.value = true;
   itemsError.value = null;
   try {
@@ -942,8 +943,9 @@ const fetchItems = async () => {
     if (!activeItemId.value && items.value.length > 0) {
       activeItemId.value = items.value[0].id;
     }
+    console.log(`[ReviewDashboard] fetchItems succeeded, retrieved ${items.value.length} items.`);
   } catch (err) {
-    console.error('Error fetching review items:', err);
+    console.error('[ReviewDashboard] Error fetching review items:', err);
     itemsError.value = 'Failed to load review items queue. Please check your connection and try again.';
   } finally {
     loading.value = false;
@@ -952,6 +954,7 @@ const fetchItems = async () => {
 
 // Fetch users directory list
 const fetchUsers = async () => {
+  console.log('[ReviewDashboard] fetchUsers called with filters:', JSON.stringify(userFilters));
   usersLoading.value = true;
   usersError.value = null;
   try {
@@ -961,8 +964,9 @@ const fetchUsers = async () => {
     if (activeUserEmail.value && !users.value.some(u => u.author_email === activeUserEmail.value)) {
       activeUserEmail.value = null;
     }
+    console.log(`[ReviewDashboard] fetchUsers succeeded, retrieved ${users.value.length} users.`);
   } catch (err) {
-    console.error('Error fetching user directory:', err);
+    console.error('[ReviewDashboard] Error fetching user directory:', err);
     usersError.value = 'Failed to load user directory. Please try again.';
   } finally {
     usersLoading.value = false;
@@ -971,14 +975,16 @@ const fetchUsers = async () => {
 
 // Select user in Directory list
 const selectUser = async (email) => {
+  console.log('[ReviewDashboard] selectUser loading history for email:', email);
   activeUserEmail.value = email;
   userHistoryLoading.value = true;
   userHistoryError.value = null;
   try {
     const response = await axios.get(`/api/users/${email}/history`);
     userHistoryDetails.value = response.data;
+    console.log('[ReviewDashboard] selectUser loaded reputation details successfully:', response.data);
   } catch (err) {
-    console.error('Failed to load user history:', err);
+    console.error('[ReviewDashboard] Failed to load user history:', err);
     userHistoryError.value = 'Failed to load user reputation history details.';
   } finally {
     userHistoryLoading.value = false;
@@ -990,6 +996,7 @@ const toggleUserBan = async () => {
   if (!activeUserEmail.value) return;
   const isCurrentlyBanned = userHistoryDetails.value?.is_banned;
   const nextAction = isCurrentlyBanned ? 'unban' : 'ban';
+  console.log(`[ReviewDashboard] toggleUserBan action triggered. Email: ${activeUserEmail.value}, action: ${nextAction}`);
   
   try {
     const res = await axios.post('/api/users/ban', {
@@ -1109,6 +1116,7 @@ const submitReview = async (status) => {
 
   actioning.value = true;
   const currentId = activeItemId.value;
+  console.log('[ReviewDashboard] submitReview resolution triggered:', { itemId: currentId, status, note: reviewNote.value });
   const nextItem = getNextPendingItemAfter(currentId);
 
   // Optimistic UI updates
@@ -1129,10 +1137,11 @@ const submitReview = async (status) => {
 
   try {
     await axios.patch(`/api/items/${currentId}/review`, payload);
+    console.log(`[ReviewDashboard] submitReview PATCH resolved successfully for #${currentId}`);
     showToast(`Submission #${currentId} approved successfully!`, 'success');
     await fetchItemsSilent();
   } catch (err) {
-    console.error('Failed to submit review resolution:', err);
+    console.error('[ReviewDashboard] Failed to submit review resolution:', err);
     showToast('Failed to approve submission.', 'error');
     fetchItems();
   } finally {
@@ -1147,6 +1156,7 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
 
   actioning.value = true;
   const currentId = activeItemId.value;
+  console.log('[ReviewDashboard] handleRejectionConfirmed triggered:', { itemId: currentId, sendEmail, banUser, banReason });
   const nextItem = getNextPendingItemAfter(currentId);
 
   // Optimistic UI updates
@@ -1174,6 +1184,7 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
 
   try {
     const res = await axios.patch(`/api/items/${currentId}/review`, payload);
+    console.log(`[ReviewDashboard] handleRejectionConfirmed PATCH resolved successfully for #${currentId}. Blocked count:`, res.data?.blocked_count);
     
     if (banUser) {
       let msg = `Submission #${currentId} rejected & user permanently suspended!`;
@@ -1187,7 +1198,7 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
 
     await fetchItemsSilent();
   } catch (err) {
-    console.error('Failed to submit review rejection:', err);
+    console.error('[ReviewDashboard] Failed to submit review rejection:', err);
     showToast('Failed to reject submission.', 'error');
     fetchItems();
   } finally {
@@ -1203,6 +1214,7 @@ const submitReviewSilently = async () => {
 
   actioning.value = true;
   const currentId = activeItemId.value;
+  console.log('[ReviewDashboard] submitReviewSilently triggered:', { itemId: currentId, note: reviewNote.value });
   const nextItem = getNextPendingItemAfter(currentId);
 
   // Optimistic UI updates
@@ -1224,10 +1236,11 @@ const submitReviewSilently = async () => {
 
   try {
     await axios.patch(`/api/items/${currentId}/review`, payload);
+    console.log(`[ReviewDashboard] submitReviewSilently PATCH resolved successfully for #${currentId}`);
     showToast(`Submission #${currentId} silently rejected.`, 'success');
     await fetchItemsSilent();
   } catch (err) {
-    console.error('Failed to submit silent rejection:', err);
+    console.error('[ReviewDashboard] Failed to submit silent rejection:', err);
     showToast('Failed to reject submission silently.', 'error');
     fetchItems();
   } finally {

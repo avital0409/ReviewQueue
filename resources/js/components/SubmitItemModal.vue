@@ -163,6 +163,7 @@ const getLocalFallbackPersona = () => {
 };
 
 const autoFill = async () => {
+  console.log('[SubmitItemModal] autoFill triggered. Requesting mock content...');
   isGenerating.value = true;
   error.value = null;
 
@@ -175,17 +176,20 @@ const autoFill = async () => {
     if (response.data && response.data.email && response.data.content) {
       selectedEmail = response.data.email;
       selectedContent = response.data.content;
+      console.log('[SubmitItemModal] Dynamic local AI generation resolved successfully:', { email: selectedEmail });
     } else {
       // API is configured but returned a status/fallback array, or key bypassed
       const localPersona = getLocalFallbackPersona();
       selectedEmail = localPersona.email;
       selectedContent = localPersona.content;
+      console.log('[SubmitItemModal] Local provider returned fallback. Selected static persona:', { email: selectedEmail });
     }
   } catch (err) {
     // Graceful fallback to static personas on network/server failures
     const localPersona = getLocalFallbackPersona();
     selectedEmail = localPersona.email;
     selectedContent = localPersona.content;
+    console.warn('[SubmitItemModal] Local provider threw exception. Selected static fallback persona:', { email: selectedEmail }, err);
   } finally {
     isGenerating.value = false;
   }
@@ -207,14 +211,17 @@ const autoFill = async () => {
 };
 
 const handleSubmit = async () => {
+  console.log('[SubmitItemModal] handleSubmit called with payload:', JSON.stringify(form));
   submitting.value = true;
   error.value = null;
 
   try {
     const response = await axios.post('/api/items', form);
+    console.log('[SubmitItemModal] Submission successfully accepted by gateway:', response.data);
     emit('submitted', response.data);
     closeModal();
   } catch (err) {
+    console.error('[SubmitItemModal] Gateway rejected submission:', err);
     if (err.response && err.response.data && err.response.data.message) {
       error.value = err.response.data.message;
     } else {

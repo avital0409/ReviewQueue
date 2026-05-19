@@ -129,10 +129,12 @@ const submitting = ref(false);
 
 const generateDraft = async () => {
   if (!props.item) return;
+  console.log('[RejectionEmailModal] generateDraft initiated:', { itemId: props.item.id, isBan: props.isBan, reviewerNote: props.reviewerNote });
 
   // Use prefetched draft if available and NOT in ban mode (re-fetch to format suspension rules)
   if (props.prefetchedDraft && !props.isBan && props.prefetchedDraft.note === props.reviewerNote) {
     if (props.prefetchedDraft.loading) {
+      console.log('[RejectionEmailModal] Re-using loading pre-fetched draft stream...');
       loadingDraft.value = true;
       const unwatch = watch(() => props.prefetchedDraft?.loading, (loading) => {
         if (!loading) {
@@ -143,6 +145,7 @@ const generateDraft = async () => {
       });
       return;
     } else if (props.prefetchedDraft.draft) {
+      console.log('[RejectionEmailModal] Re-using completed pre-fetched draft:', props.prefetchedDraft.draft);
       emailBody.value = props.prefetchedDraft.draft;
       loadingDraft.value = false;
       return;
@@ -151,13 +154,15 @@ const generateDraft = async () => {
 
   loadingDraft.value = true;
   try {
+    console.log('[RejectionEmailModal] Sending POST request for rejection draft...');
     const response = await axios.post(`/api/items/${props.item.id}/rejection-draft`, {
       reviewer_note: props.reviewerNote,
       is_ban: props.isBan
     });
     emailBody.value = response.data.draft || '';
+    console.log('[RejectionEmailModal] Received rejection draft successfully:', emailBody.value);
   } catch (err) {
-    console.error('Failed to generate AI draft:', err);
+    console.error('[RejectionEmailModal] Failed to generate AI draft:', err);
     if (props.isBan) {
       emailBody.value = `Dear Submitter,\n\nThis is a formal notice that your email address (${props.item.author_email}) has been permanently suspended from submitting content to ReviewQueue.\n\nOur Trust & Safety system identified repeated policy violations associated with your submissions, exceeding our allowed Strike 3 threshold.\n\nReason for Suspension:\n- ${props.reviewerNote || 'Repeated violations of content guidelines.'}\n\nWarm regards,\nReviewQueue Moderation & Safety Hub`;
     } else {
@@ -177,6 +182,7 @@ watch(() => props.isOpen, (newVal) => {
 });
 
 const confirmRejection = () => {
+  console.log('[RejectionEmailModal] confirmRejection clicked with parameters:', { sendEmail: sendEmail.value, isBan: props.isBan });
   submitting.value = true;
   emit('confirm', {
     sendEmail: sendEmail.value,
