@@ -42,8 +42,8 @@
           </div>
         </div>
         <button
-          @click="$emit('close')"
           class="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          @click="$emit('close')"
         >
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -120,8 +120,8 @@
               >Email Body Draft</label
             >
             <button
-              @click="generateDraft"
               class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              @click="generateDraft"
             >
               <span>✨</span> Regenerate AI Draft
             </button>
@@ -141,15 +141,15 @@
         class="border-t border-slate-100 bg-slate-50/50 p-6 flex items-center justify-end gap-3 shrink-0"
       >
         <button
-          @click="$emit('close')"
           class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus:outline-none transition-all"
+          @click="$emit('close')"
         >
           Cancel
         </button>
         <button
-          @click="confirmRejection"
           :disabled="submitting"
           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/10 hover:from-red-500 hover:to-rose-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          @click="confirmRejection"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path

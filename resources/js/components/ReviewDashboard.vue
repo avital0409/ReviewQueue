@@ -29,27 +29,27 @@
       <!-- Navigation Tabs -->
       <div class="flex items-center gap-6 text-sm h-full font-bold">
         <button
-          @click="activeTab = 'queue'"
           :class="[
             'h-full px-2 border-b-2 transition-all duration-200',
             activeTab === 'queue'
               ? 'text-blue-600 border-blue-600'
               : 'text-slate-500 hover:text-slate-800 border-transparent',
           ]"
+          @click="activeTab = 'queue'"
         >
           Moderation Queue
         </button>
         <button
-          @click="
-            activeTab = 'users';
-            fetchUsers();
-          "
           :class="[
             'h-full px-2 border-b-2 transition-all duration-200',
             activeTab === 'users'
               ? 'text-blue-600 border-blue-600'
               : 'text-slate-500 hover:text-slate-800 border-transparent',
           ]"
+          @click="
+            activeTab = 'users';
+            fetchUsers();
+          "
         >
           User Directory
         </button>
@@ -57,8 +57,8 @@
 
       <div class="flex items-center gap-4">
         <button
-          @click="isModalOpen = true"
           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/10 hover:from-blue-500 hover:to-indigo-500 transition-all focus:outline-none"
+          @click="isModalOpen = true"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -95,10 +95,10 @@
             </div>
             <input
               v-model="filters.search"
-              @input="fetchItems"
               type="text"
               placeholder="Search content, author, flags..."
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+              @input="fetchItems"
             />
           </div>
 
@@ -107,13 +107,13 @@
             <button
               v-for="statusOpt in ['all', 'pending', 'approved', 'rejected', 'blocked']"
               :key="statusOpt"
-              @click="setStatusFilter(statusOpt)"
               :class="[
                 'flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5',
                 filters.status === statusOpt
                   ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
                   : 'text-slate-500 hover:text-slate-800',
               ]"
+              @click="setStatusFilter(statusOpt)"
             >
               {{ statusOpt }}
               <span
@@ -129,8 +129,8 @@
             <span class="font-medium text-slate-400">Sort by</span>
             <select
               v-model="filters.sort"
-              @change="fetchItems"
               class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
+              @change="fetchItems"
             >
               <option value="newest">Newest First</option>
               <option value="risk_desc">Risk: High to Low</option>
@@ -163,8 +163,8 @@
               <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ itemsError }}</p>
             </div>
             <button
-              @click="fetchItems"
               class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
+              @click="fetchItems"
             >
               Retry Connection
             </button>
@@ -219,13 +219,13 @@
           <div
             v-for="item in filteredItems"
             :key="item.id"
-            @click="selectItem(item.id)"
             :class="[
               'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
               activeItemId === item.id
                 ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
                 : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
             ]"
+            @click="selectItem(item.id)"
           >
             <!-- Header on card -->
             <div class="flex items-center justify-between">
@@ -681,7 +681,6 @@
             >
               <!-- Primary Reject & Email button -->
               <button
-                @click="openRejectionEmailModal"
                 :disabled="actioning"
                 class="inline-flex items-center gap-2 rounded-l-xl bg-gradient-to-r px-5 py-3.5 text-sm font-semibold text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all border-r border-red-700/30"
                 :class="
@@ -689,6 +688,7 @@
                     ? 'from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600'
                     : 'from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500'
                 "
+                @click="openRejectionEmailModal"
               >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -703,7 +703,6 @@
 
               <!-- Dropdown trigger button -->
               <button
-                @click="isRejectDropdownOpen = !isRejectDropdownOpen"
                 :disabled="actioning"
                 class="inline-flex items-center px-3 rounded-r-xl text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 :class="
@@ -711,6 +710,7 @@
                     ? 'bg-gradient-to-r from-rose-700 to-rose-700 hover:from-rose-600 hover:to-rose-600'
                     : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'
                 "
+                @click="isRejectDropdownOpen = !isRejectDropdownOpen"
               >
                 <svg
                   class="h-3 w-3 transform transition-transform duration-250"
@@ -734,8 +734,8 @@
                 class="absolute bottom-full right-0 mb-1 w-56 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-1.5 shadow-xl shadow-slate-250/50 z-20 animate-in fade-in slide-in-from-bottom-2 duration-150"
               >
                 <button
-                  @click="submitReviewSilently"
                   class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-rose-600 hover:bg-rose-50/80 transition-colors"
+                  @click="submitReviewSilently"
                 >
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -750,8 +750,8 @@
                 <!-- Manual Ban trigger in dropdown if not escalated -->
                 <button
                   v-if="!isBanEscalated"
-                  @click="openBanEmailModalDirect"
                   class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-red-700 hover:bg-red-50 transition-colors"
+                  @click="openBanEmailModalDirect"
                 >
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -768,9 +768,9 @@
 
             <!-- Approve Button -->
             <button
-              @click="submitReview('approved')"
               :disabled="actioning"
               class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-green-500/10 hover:from-green-500 hover:to-emerald-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              @click="submitReview('approved')"
             >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -843,10 +843,10 @@
             </div>
             <input
               v-model="userFilters.search"
-              @input="fetchUsers"
               type="text"
               placeholder="Search submitters by email..."
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+              @input="fetchUsers"
             />
           </div>
 
@@ -854,8 +854,8 @@
             <span class="font-medium text-slate-400">Sort submitters by</span>
             <select
               v-model="userFilters.sort"
-              @change="fetchUsers"
               class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
+              @change="fetchUsers"
             >
               <option value="violations">Strikes / Violations</option>
               <option value="total">Total Submissions</option>
@@ -888,8 +888,8 @@
               <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ usersError }}</p>
             </div>
             <button
-              @click="fetchUsers"
               class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
+              @click="fetchUsers"
             >
               Retry Connection
             </button>
@@ -926,16 +926,16 @@
           </div>
 
           <div
-            v-else
             v-for="user in users"
+            v-else
             :key="user.author_email"
-            @click="selectUser(user.author_email)"
             :class="[
               'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
               activeUserEmail === user.author_email
                 ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
                 : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
             ]"
+            @click="selectUser(user.author_email)"
           >
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-700 truncate max-w-[200px]">{{
@@ -1008,13 +1008,13 @@
             </div>
 
             <button
-              @click="toggleUserBan"
               class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold border transition-all"
               :class="
                 userHistoryDetails?.is_banned
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm'
                   : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'
               "
+              @click="toggleUserBan"
             >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -1113,8 +1113,8 @@
               >
                 <p><strong>Error:</strong> {{ userHistoryError }}</p>
                 <button
-                  @click="selectUser(activeUserEmail)"
                   class="rounded-xl border border-red-200 bg-white hover:bg-red-100/50 px-3 py-1.5 text-[11px] font-semibold text-red-700 transition-all shadow-sm mx-auto block"
+                  @click="selectUser(activeUserEmail)"
                 >
                   Retry Loading
                 </button>
@@ -1133,8 +1133,8 @@
               </div>
 
               <div
-                v-else
                 v-for="audit in userHistoryDetails.history"
+                v-else
                 :key="audit.id"
                 class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-slate-300 transition-all"
               >
@@ -1220,18 +1220,18 @@
 
     <!-- Submit modal component -->
     <SubmitItemModal
-      :isOpen="isModalOpen"
+      :is-open="isModalOpen"
       @close="isModalOpen = false"
       @submitted="handleItemSubmitted"
     />
 
     <!-- Rejection & Ban Email Modal component -->
     <RejectionEmailModal
-      :isOpen="isRejectionEmailModalOpen"
+      :is-open="isRejectionEmailModalOpen"
       :item="activeItem"
-      :reviewerNote="reviewNote"
-      :prefetchedDraft="activeItem ? prefetchedDrafts[activeItem.id] : null"
-      :isBan="isBanModalEscalated"
+      :reviewer-note="reviewNote"
+      :prefetched-draft="activeItem ? prefetchedDrafts[activeItem.id] : null"
+      :is-ban="isBanModalEscalated"
       @close="isRejectionEmailModalOpen = false"
       @confirm="handleRejectionConfirmed"
     />
@@ -1288,8 +1288,8 @@
             <p class="text-xs font-bold text-slate-700 leading-normal">{{ toast.message }}</p>
           </div>
           <button
-            @click="notifications = notifications.filter((n) => n.id !== toast.id)"
             class="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+            @click="notifications = notifications.filter((n) => n.id !== toast.id)"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path

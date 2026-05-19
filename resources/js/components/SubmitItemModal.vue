@@ -34,8 +34,8 @@
           Submit Content for Review
         </h3>
         <button
-          @click="closeModal"
           class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+          @click="closeModal"
         >
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -49,7 +49,7 @@
       </div>
 
       <!-- Body & Form -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-5">
+      <form class="p-6 space-y-5" @submit.prevent="handleSubmit">
         <!-- Error Alert -->
         <div
           v-if="error"
@@ -108,9 +108,9 @@
             <!-- Auto fill button -->
             <button
               type="button"
-              @click="autoFill"
               :disabled="isGenerating"
               class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              @click="autoFill"
             >
               <svg
                 v-if="isGenerating"
@@ -149,8 +149,8 @@
         <div class="flex items-center justify-end gap-3 pt-2">
           <button
             type="button"
-            @click="closeModal"
             class="rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-all"
+            @click="closeModal"
           >
             Cancel
           </button>
