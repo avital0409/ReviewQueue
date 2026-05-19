@@ -38,7 +38,10 @@ class OllamaService
      */
     public function generateMockItem(): array
     {
+        Log::info('[OllamaService] generateMockItem() initiated.');
+
         if (! $this->isOllamaAvailable()) {
+            Log::warning('[OllamaService] Local Ollama is not configured or active.');
             throw new \Exception('Local Ollama is not configured or active.');
         }
 
@@ -89,6 +92,7 @@ class OllamaService
                 }
             }
 
+            Log::info("[OllamaService] Dispatching POST request to local Ollama tag '/api/generate' with model: {$model}");
             $response = Http::timeout(90)->post("{$this->ollamaUrl}/api/generate", [
                 'model' => $model,
                 'prompt' => $prompt,
@@ -102,6 +106,8 @@ class OllamaService
 
                 $parsed = json_decode($text, true);
                 if (isset($parsed['email']) && isset($parsed['content'])) {
+                    Log::info("[OllamaService] Successfully generated mock item. Email: {$parsed['email']}");
+
                     return [
                         'email' => $parsed['email'],
                         'content' => $parsed['content'],
@@ -123,8 +129,11 @@ class OllamaService
     public function generateRejectionEmailDraft(string $content, string $authorEmail, ?string $reason): string
     {
         $reason = $reason ?: 'Content did not comply with our standard guidelines.';
+        Log::info("[OllamaService] generateRejectionEmailDraft() initiated for: {$authorEmail}");
 
         if (! $this->isOllamaAvailable()) {
+            Log::info('[OllamaService] Local Ollama is not active or available. Returning premium static fallback rejection notice.');
+
             return $this->getFallbackRejectionDraft($content, $reason);
         }
 
@@ -170,6 +179,7 @@ class OllamaService
                 }
             }
 
+            Log::info("[OllamaService] Dispatching POST request to local Ollama tag '/api/generate' with model: {$model}");
             $response = Http::timeout(45)->post("{$this->ollamaUrl}/api/generate", [
                 'model' => $model,
                 'prompt' => $prompt,
@@ -180,6 +190,8 @@ class OllamaService
                 $data = $response->json();
                 $draft = trim($data['response'] ?? '');
                 if (! empty($draft)) {
+                    Log::info('[OllamaService] Successfully generated custom rejection email draft (length: '.strlen($draft).' chars).');
+
                     return $draft;
                 }
             }
@@ -195,7 +207,11 @@ class OllamaService
      */
     public function generateAccountBanEmailDraft(string $email, string $content, string $reason): string
     {
+        Log::info("[OllamaService] generateAccountBanEmailDraft() initiated for: {$email}");
+
         if (! $this->isOllamaAvailable()) {
+            Log::info('[OllamaService] Local Ollama is not active or available. Returning premium static fallback suspension notice.');
+
             return $this->getFallbackBanDraft($email, $content, $reason);
         }
 
@@ -246,6 +262,7 @@ class OllamaService
                 }
             }
 
+            Log::info("[OllamaService] Dispatching POST request to local Ollama tag '/api/generate' with model: {$model}");
             $response = Http::timeout(45)->post("{$this->ollamaUrl}/api/generate", [
                 'model' => $model,
                 'prompt' => $prompt,
@@ -256,6 +273,8 @@ class OllamaService
                 $data = $response->json();
                 $draft = trim($data['response'] ?? '');
                 if (! empty($draft)) {
+                    Log::info('[OllamaService] Successfully generated custom suspension/ban email draft (length: '.strlen($draft).' chars).');
+
                     return $draft;
                 }
             }
