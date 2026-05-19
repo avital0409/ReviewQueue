@@ -107,7 +107,7 @@
               {{
                 isBan
                   ? 'Generating a formal account suspension letter detailing policy threshold breach.'
-                  : 'Generating a polite, context-aware notification using local Ollama model.'
+                  : 'Generating a polite, context-aware notification using Google Gemini API.'
               }}
             </p>
           </div>

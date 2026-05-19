@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\ItemRejectedMail;
 use App\Models\Item;
-use App\Services\OllamaService;
+use App\Services\GeminiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -45,8 +45,8 @@ class RejectionEmailTest extends TestCase
 
         $this->assertNotEmpty($response->json('draft'));
 
-        $ollama = app(OllamaService::class);
-        if (! $ollama->isOllamaAvailable()) {
+        $gemini = app(GeminiService::class);
+        if (! $gemini->isGeminiAvailable()) {
             $this->assertStringContainsString('Spam keywords and urgent language detected.', $response->json('draft'));
         }
     }

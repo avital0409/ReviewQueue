@@ -6,17 +6,19 @@ A high-fidelity, production-grade moderation oversight application built with **
 
 ## 🚀 How to Run the Project
 
-### 🐳 1. Running via Docker (Zero-Config / Recommended)
+### 🐳 1. Running via Docker (Lightweight & Instant / Recommended)
 
-To build and run the entire full-stack application instantly with **absolutely zero manual setup** (Docker will automatically handle creating `.env` from `.env.example`, generating a secure `APP_KEY`, creating the SQLite database, and running migrations/seeders):
+To build and run the full-stack application instantly in seconds with **absolutely zero manual setup** (Docker will automatically handle creating `.env` from `.env.example`, generating a secure `APP_KEY`, compiling frontend assets, creating the SQLite database, and running migrations/seeders):
 
 1. **Build and Start Container**:
    ```bash
    docker compose up --build
    ```
 
-   > [!NOTE]
-   > **Please Be Patient on First Boot**: The first time you start the containers, a helper service (`ollama-pull`) will automatically download the **`llama3`** LLM model (approx. 3.2–4.7 GB). Depending on your internet connection speed, this step may take a few minutes to complete before the AI-powered rejections and mock generators become active. Subsequent container launches are instantaneous as the model is persistently cached inside a Docker volume.
+   > [!TIP]
+   > **AI Integration Setup**: The application utilizes the **Google Gemini API** (`gemini-1.5-flash`) for sub-second, high-performance email draft generation. 
+   > 
+   > Simply obtain a completely free API key from **[Google AI Studio](https://aistudio.google.com)** and paste it as `GEMINI_API_KEY=your_key` in your `.env` file. If no API key is supplied, the application automatically detects it and gracefully degrades to premium static email templates so the dashboard is fully functional out of the box.
 
 2. **Access ModHub**:
    Open `http://localhost:8000` in your web browser. Everything is fully pre-configured, database migrations are automatically run, and the seed data is populated!
@@ -78,8 +80,7 @@ The application defines a few specific configuration parameters inside the `.env
 
 | Key | Default Value | Description |
 |---|---|---|
-| `OLLAMA_URL` | `http://127.0.0.1:11434` | The host API URL of the running Ollama local server. (Set to `http://ollama:11434` inside Docker to connect to the containerized Ollama service). |
-| `OLLAMA_MODEL` | `llama3` | The target local LLM model to query for drafting rejection/ban email suggestions. |
+| `GEMINI_API_KEY` | | The Google Gemini API key to query for dynamic, high-speed rejection/ban email suggestions. (Obtain a free key from Google AI Studio). |
 | `DB_CONNECTION` | `sqlite` | The primary Eloquent database connection driver. |
 | `DB_DATABASE` | `database/database.sqlite` | The path to the local SQLite database file. |
 
@@ -111,12 +112,11 @@ The backend exposes a highly RESTful, JSON-structured API layer:
 The system includes a two-tiered synchronous and asynchronous moderation engine:
 1. **Rule-Based Heuristic Scans (Synchronous)**:
    Upon submission, the text is audited for urgent phrases, financial keywords, suspicious links, excessive casing, and global blacklist states to assign a custom `risk_score` (0–100) and trigger automated tags.
-2. **AI-Driven Sentiment & Auto-Drafting (Ollama Integration)**:
-   Integrates with a local **Ollama** instance to perform semantic intent analysis and dynamically draft polite, highly contextual, and custom rejection or suspension warning emails:
+2. **AI-Driven Sentiment & Auto-Drafting (Google Gemini API Integration)**:
+   Integrates with Google's **Gemini API** (`gemini-1.5-flash`) to perform semantic intent analysis and dynamically draft polite, highly contextual, and custom rejection or suspension warning emails:
    * **Context-Aware Generation**: When a reviewer rejects an item or bans an account, the backend compiles the submitter's email, the original violating content snippet, and the reviewer's specific custom reason into a structured instruction prompt.
    * **Custom Prompt Engineering**: Instructs the LLM to write in a constructive, professional tone, explaining the guidelines violation, and strictly forbids bracketed placeholders (e.g. `[User Name]`, `[Date]`), ensuring the drafts are 100% complete and ready to send.
-   * **Automatic Model Discovery**: The `OllamaService` queries Ollama's local tags endpoint `/api/tags` to automatically discover and use whichever local model is pulled, avoiding hardcoded mismatch crashes.
-   * **High-Fidelity Offline Fallback**: If the local Ollama service is offline or uninstalled, the app automatically detects the timeout and gracefully falls back to structured, professional static drafts to preserve the moderator's workflow.
+   * **High-Fidelity Offline Fallback**: If the `GEMINI_API_KEY` is not provided or the API is unreachable, the app automatically detects the fallback state and gracefully drops back to structured, professional static drafts to preserve the moderator's workflow.
 
 ---
 
@@ -128,7 +128,7 @@ The system includes a two-tiered synchronous and asynchronous moderation engine:
 * **Single-Moderator Flow**: Assumed that only one reviewer accesses the queue at any given time, deferring complex collaborative lockout mechanisms (ticket locking) to scale scopes.
 * **Local Mail Logging**: Configured mail drivers to write outbound confirmation emails directly to the Laravel logs (`MAIL_MAILER=log`) for easy manual evaluation.
 * **Auto-Ban Logic Infallibility**: Assumed that reaching exactly 3 rejections represents a definitive ban threshold, while providing a manual ban-toggle switch for senior moderation overrides.
-* **AI Fallbacks**: In environments where a local Ollama LLM is not actively running, the service automatically detects connection states and gracefully falls back to structured rule-based template generation to preserve user workflows.
+* **AI Fallbacks**: In environments where a `GEMINI_API_KEY` is not provided in `.env`, the service automatically detects the state and gracefully falls back to structured rule-based template generation to preserve user workflows.
 
 ---
 
@@ -152,11 +152,10 @@ The system includes a two-tiered synchronous and asynchronous moderation engine:
 * **Outbound Mail Infrastructure & Queues**: Configured email outputs to route directly to Laravel logs (`MAIL_MAILER=log`) for simple zero-setup local validation, deferring paid SMTP/SES provider setups and Redis background queue worker integrations.
 * **Interactive Rules Creator Panel**: Heuristic violation parameters (financial triggers, word weights, blacklist strings) are defined programmatically. I deferred building an admin control panel UI that allows senior moderators to dynamically add, edit, or remove heuristic check rules on the fly.
 
-### 🧠 Self-Hosted Local AI (Ollama) vs. External Cloud API
-A major architectural choice was using a local, self-hosted Ollama LLM instead of integrating a third-party paid API (e.g., OpenAI or Anthropic):
-* **Why I Used Ollama**: I optimized for **zero external developer dependencies, zero usage costs, and 100% offline data privacy**. This prevents the evaluator from needing to manage API keys, set up billing, or share sensitive submission content with external cloud companies.
-* **The Tradeoff**: Local self-hosted LLMs require downloading a large model (approx. 3.2–4.7 GB) on the first boot and consume local hardware cycles to generate responses.
-* *For Production*: In a live commercial product, the LLM client would transition to query an external high-throughput cloud API (or run Ollama on dedicated GPU server clusters) to bypass local download latency and CPU performance constraints.
+### 🧠 Free Cloud AI (Google Gemini) vs. Self-Hosted / Paid LLMs
+A major architectural choice was using Google's free-tier Gemini API (`gemini-1.5-flash`) instead of local self-hosted options (like Ollama) or other paid cloud APIs (like OpenAI or Anthropic):
+* **Why I Used Gemini**: I optimized for **blazing-fast response speeds (sub-second generation), zero local resource consumption, and zero developer cost**. It completely avoids requiring the evaluator to download massive 4GB local models or run intensive host engines, while offering the most robust and responsive user experience possible.
+* **The Resilient Fallback**: If no API key is configured or Google servers are unreachable, the app's internal service caught checks automatically redirect to provide high-fidelity static drafts, making onboarding completely bulletproof.
 
 ---
 

@@ -6,8 +6,8 @@ use App\Http\Requests\StoreItemRequest;
 use App\Mail\ItemBannedMail;
 use App\Mail\ItemRejectedMail;
 use App\Models\Item;
+use App\Services\GeminiService;
 use App\Services\HeuristicEngineService;
-use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -216,22 +216,22 @@ class ItemController extends Controller
     }
 
     /**
-     * Generate a dynamic rejection or ban email draft using local Ollama.
+     * Generate a dynamic rejection or ban email draft using Gemini API.
      */
-    public function rejectionDraft(Request $request, $id, OllamaService $ollama)
+    public function rejectionDraft(Request $request, $id, GeminiService $gemini)
     {
         $item = Item::findOrFail($id);
         $reason = $request->input('reviewer_note');
         $isBan = $request->input('is_ban', false);
 
         if ($isBan) {
-            $draft = $ollama->generateAccountBanEmailDraft(
+            $draft = $gemini->generateAccountBanEmailDraft(
                 $item->author_email,
                 $item->content,
                 $reason ?: 'Repeated policy violations (Strike 3 exceeded).'
             );
         } else {
-            $draft = $ollama->generateRejectionEmailDraft($item->content, $item->author_email, $reason);
+            $draft = $gemini->generateRejectionEmailDraft($item->content, $item->author_email, $reason);
         }
 
         return response()->json([
@@ -240,18 +240,18 @@ class ItemController extends Controller
     }
 
     /**
-     * Generate a creative dynamic mock item using local Ollama.
+     * Generate a creative dynamic mock item using Gemini API.
      */
-    public function generate(OllamaService $ollama)
+    public function generate(GeminiService $gemini)
     {
         @set_time_limit(120);
 
         try {
-            return response()->json($ollama->generateMockItem());
+            return response()->json($gemini->generateMockItem());
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'fallback',
-                'message' => 'No active local AI providers detected. Falling back to local static personas.',
+                'message' => 'No active Gemini AI provider detected. Falling back to local static personas.',
             ]);
         }
     }
