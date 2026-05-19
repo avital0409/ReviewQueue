@@ -17,9 +17,9 @@ class UserController extends Controller
             DB::raw("COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count"),
             DB::raw("COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_count"),
             DB::raw("COUNT(CASE WHEN status = 'blocked' THEN 1 END) as blocked_count"),
-            DB::raw("COUNT(*) as total_count")
+            DB::raw('COUNT(*) as total_count')
         )
-        ->groupBy('author_email');
+            ->groupBy('author_email');
 
         $users = DB::table(DB::raw("({$subquery->toSql()}) as stats"))
             ->mergeBindings($subquery->getQuery())
@@ -30,7 +30,7 @@ class UserController extends Controller
                 'stats.rejected_count',
                 'stats.blocked_count',
                 'stats.total_count',
-                DB::raw("CASE WHEN banned_users.email IS NOT NULL THEN 1 ELSE 0 END as is_banned"),
+                DB::raw('CASE WHEN banned_users.email IS NOT NULL THEN 1 ELSE 0 END as is_banned'),
                 'banned_users.banned_at',
                 'banned_users.ban_reason'
             );
@@ -49,7 +49,7 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'users' => $users->get()
+            'users' => $users->get(),
         ]);
     }
 
@@ -66,10 +66,10 @@ class UserController extends Controller
 
         return response()->json([
             'email' => $email,
-            'is_banned' => !is_null($banRecord),
+            'is_banned' => ! is_null($banRecord),
             'banned_at' => $banRecord ? $banRecord->banned_at : null,
             'ban_reason' => $banRecord ? $banRecord->ban_reason : null,
-            'history' => $history
+            'history' => $history,
         ]);
     }
 
@@ -81,7 +81,7 @@ class UserController extends Controller
         $request->validate([
             'email' => 'required|email',
             'action' => 'required|in:ban,unban',
-            'reason' => 'nullable|string'
+            'reason' => 'nullable|string',
         ]);
 
         $email = $request->input('email');
@@ -97,7 +97,7 @@ class UserController extends Controller
                     'banned_at' => now(),
                     'ban_reason' => $reason,
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]
             );
 

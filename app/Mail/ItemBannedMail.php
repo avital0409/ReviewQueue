@@ -13,7 +13,9 @@ class ItemBannedMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $authorEmail;
+
     public string $banReason;
+
     public string $submissionContent;
 
     /**

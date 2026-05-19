@@ -33,7 +33,7 @@ class HeuristicTaggingTest extends TestCase
         $response = $this->postJson('/api/items', $payload);
 
         $response->assertStatus(201);
-        
+
         $item = Item::first();
         $this->assertNotNull($item);
         $this->assertEquals(25, $item->risk_score);
@@ -53,7 +53,7 @@ class HeuristicTaggingTest extends TestCase
         $response = $this->postJson('/api/items', $payload);
 
         $response->assertStatus(201);
-        
+
         $item = Item::first();
         $this->assertNotNull($item);
         $this->assertEquals(25, $item->risk_score);
@@ -73,7 +73,7 @@ class HeuristicTaggingTest extends TestCase
         $response = $this->postJson('/api/items', $payload);
 
         $response->assertStatus(201);
-        
+
         $item = Item::first();
         $this->assertNotNull($item);
         $this->assertEquals(35, $item->risk_score);

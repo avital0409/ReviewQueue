@@ -47,8 +47,8 @@ class UserReputationTest extends TestCase
                         'rejected_count',
                         'blocked_count',
                         'is_banned',
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $userData = collect($response->json('users'))->firstWhere('author_email', 'user1@example.com');
@@ -84,8 +84,8 @@ class UserReputationTest extends TestCase
                         'risk_score',
                         'reviewer_note',
                         'created_at',
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $this->assertCount(1, $response->json('history'));
@@ -101,7 +101,7 @@ class UserReputationTest extends TestCase
         $response = $this->postJson('/api/users/ban', [
             'email' => $email,
             'action' => 'ban',
-            'reason' => 'Repeated spam bot actions'
+            'reason' => 'Repeated spam bot actions',
         ]);
 
         $response->assertStatus(200)
@@ -109,20 +109,20 @@ class UserReputationTest extends TestCase
 
         $this->assertDatabaseHas('banned_users', [
             'email' => $email,
-            'ban_reason' => 'Repeated spam bot actions'
+            'ban_reason' => 'Repeated spam bot actions',
         ]);
 
         // Unban the user
         $response = $this->postJson('/api/users/ban', [
             'email' => $email,
-            'action' => 'unban'
+            'action' => 'unban',
         ]);
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
 
         $this->assertDatabaseMissing('banned_users', [
-            'email' => $email
+            'email' => $email,
         ]);
     }
 }

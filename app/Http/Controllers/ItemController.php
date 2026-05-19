@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreItemRequest;
+use App\Mail\ItemBannedMail;
+use App\Mail\ItemRejectedMail;
 use App\Models\Item;
 use App\Services\HeuristicEngineService;
 use App\Services\OllamaService;
-use App\Mail\ItemRejectedMail;
-use App\Mail\ItemBannedMail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ItemController extends Controller
 {
@@ -27,12 +27,12 @@ class ItemController extends Controller
         }
 
         // 2. Filter by search text
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('content', 'like', "%{$search}%")
-                  ->orWhere('author_email', 'like', "%{$search}%")
-                  ->orWhere('heuristic_flags', 'like', "%{$search}%");
+                    ->orWhere('author_email', 'like', "%{$search}%")
+                    ->orWhere('heuristic_flags', 'like', "%{$search}%");
             });
         }
 
@@ -51,18 +51,18 @@ class ItemController extends Controller
         // Proactively fetch and append unique user rejections (strikes) and ban statuses
         // This is highly performant and avoids N+1 query locks.
         $emails = $items->pluck('author_email')->unique();
-        
+
         $rejectionsCounts = Item::whereIn('author_email', $emails)
             ->where('status', 'rejected')
             ->select('author_email', DB::raw('count(*) as count'))
             ->groupBy('author_email')
             ->pluck('count', 'author_email');
-            
+
         $bannedEmails = DB::table('banned_users')
             ->whereIn('email', $emails)
             ->pluck('email')
             ->toArray();
-            
+
         foreach ($items as $item) {
             $item->author_rejections_count = $rejectionsCounts[$item->author_email] ?? 0;
             $item->author_is_banned = in_array($item->author_email, $bannedEmails) ? 1 : 0;
@@ -70,16 +70,16 @@ class ItemController extends Controller
 
         // Calculate dynamic state counters based on active search
         $countsQuery = Item::query();
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             $search = $request->search;
             $countsQuery->where(function ($q) use ($search) {
                 $q->where('content', 'like', "%{$search}%")
-                  ->orWhere('author_email', 'like', "%{$search}%")
-                  ->orWhere('heuristic_flags', 'like', "%{$search}%");
+                    ->orWhere('author_email', 'like', "%{$search}%")
+                    ->orWhere('heuristic_flags', 'like', "%{$search}%");
             });
         }
 
-        $allCounts = $countsQuery->selectRaw("status, count(*) as count")
+        $allCounts = $countsQuery->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
@@ -107,7 +107,7 @@ class ItemController extends Controller
 
         // 1. Gateway Ban Check: Intercept banned submitters at the entry point
         $isBanned = DB::table('banned_users')->where('email', $validated['author_email'])->exists();
-        
+
         if ($isBanned) {
             $item = Item::create([
                 'author_email' => $validated['author_email'],
@@ -119,7 +119,7 @@ class ItemController extends Controller
                 'reviewer_note' => 'Auto-rejected: Submitter is banned.',
                 'reviewed_at' => now(),
             ]);
-            
+
             return response()->json($item, 201);
         }
 
@@ -174,14 +174,14 @@ class ItemController extends Controller
         // 1. Process Permanent Ban Escalation
         if ($request->status === 'rejected' && $request->input('ban_user')) {
             $banReason = $request->input('ban_reason') ?: $request->reviewer_note ?: 'Repeated policy violations (Strike 3 exceeded).';
-            
+
             DB::table('banned_users')->updateOrInsert(
                 ['email' => $item->author_email],
                 [
                     'banned_at' => now(),
                     'ban_reason' => $banReason,
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]
             );
 
@@ -202,7 +202,7 @@ class ItemController extends Controller
                     'reviewer_note' => 'Automatically blocked: submitter banned.',
                     'reviewed_at' => now(),
                 ]);
-        } 
+        }
         // 2. Process Standard Rejection Notice
         elseif ($request->status === 'rejected' && $request->input('send_email')) {
             $emailBody = $request->input('email_body') ?: $request->reviewer_note ?: 'Content does not meet community guidelines.';
@@ -251,7 +251,7 @@ class ItemController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'fallback',
-                'message' => 'No active local AI providers detected. Falling back to local static personas.'
+                'message' => 'No active local AI providers detected. Falling back to local static personas.',
             ]);
         }
     }

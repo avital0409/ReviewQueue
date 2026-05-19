@@ -12,7 +12,7 @@ class HeuristicEngineServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new HeuristicEngineService();
+        $this->service = new HeuristicEngineService;
     }
 
     /**
@@ -20,7 +20,7 @@ class HeuristicEngineServiceTest extends TestCase
      */
     public function test_clean_content_analysis(): void
     {
-        $result = $this->service->analyze("Hello world! This is a completely clean support message.");
+        $result = $this->service->analyze('Hello world! This is a completely clean support message.');
 
         $this->assertEquals(0, $result['risk_score']);
         $this->assertEmpty($result['heuristic_flags']);
@@ -32,7 +32,7 @@ class HeuristicEngineServiceTest extends TestCase
      */
     public function test_financial_keywords_analysis(): void
     {
-        $result = $this->service->analyze("I want to invest in crypto today.");
+        $result = $this->service->analyze('I want to invest in crypto today.');
 
         $this->assertEquals(35, $result['risk_score']);
         $this->assertContains('financial_keywords', $result['heuristic_flags']);
@@ -44,7 +44,7 @@ class HeuristicEngineServiceTest extends TestCase
      */
     public function test_external_links_analysis(): void
     {
-        $result = $this->service->analyze("Check out my website at http://example.ru");
+        $result = $this->service->analyze('Check out my website at http://example.ru');
 
         $this->assertEquals(25, $result['risk_score']);
         $this->assertContains('external_links', $result['heuristic_flags']);
@@ -56,7 +56,7 @@ class HeuristicEngineServiceTest extends TestCase
      */
     public function test_urgent_intent_analysis(): void
     {
-        $result = $this->service->analyze("Please review this immediately!");
+        $result = $this->service->analyze('Please review this immediately!');
 
         $this->assertEquals(25, $result['risk_score']);
         $this->assertContains('urgent_language', $result['heuristic_flags']);
@@ -68,7 +68,7 @@ class HeuristicEngineServiceTest extends TestCase
      */
     public function test_combined_high_risk_analysis(): void
     {
-        $result = $this->service->analyze("URGENT: Invest in our new bitcoin wallet at https://scam.ru immediately!");
+        $result = $this->service->analyze('URGENT: Invest in our new bitcoin wallet at https://scam.ru immediately!');
 
         // Financial (35) + Link (25) + Urgent (25) = 85
         $this->assertEquals(85, $result['risk_score']);

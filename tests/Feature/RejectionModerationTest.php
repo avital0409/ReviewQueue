@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Item;
 use App\Mail\ItemRejectedMail;
+use App\Models\Item;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;

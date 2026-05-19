@@ -13,7 +13,7 @@ class ItemSeeder extends Seeder
      */
     public function run(): void
     {
-        $engine = new HeuristicEngineService();
+        $engine = new HeuristicEngineService;
 
         $samples = [
             // 1. Blatant bad-actor spam (High risk calculation scores, multiple content flags, auto-suggested rejection triggers)

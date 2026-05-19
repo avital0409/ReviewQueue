@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Item;
 use App\Mail\ItemRejectedMail;
+use App\Models\Item;
+use App\Services\OllamaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -43,9 +44,9 @@ class RejectionEmailTest extends TestCase
             ->assertJsonStructure(['draft']);
 
         $this->assertNotEmpty($response->json('draft'));
-        
-        $ollama = app(\App\Services\OllamaService::class);
-        if (!$ollama->isOllamaAvailable()) {
+
+        $ollama = app(OllamaService::class);
+        if (! $ollama->isOllamaAvailable()) {
             $this->assertStringContainsString('Spam keywords and urgent language detected.', $response->json('draft'));
         }
     }

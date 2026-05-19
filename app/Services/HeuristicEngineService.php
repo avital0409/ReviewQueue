@@ -7,7 +7,6 @@ class HeuristicEngineService
     /**
      * Analyze a given text content and return heuristic analysis results.
      *
-     * @param string $content
      * @return array{risk_score: int, heuristic_flags: array<string>, auto_suggestion: string}
      */
     public function analyze(string $content): array

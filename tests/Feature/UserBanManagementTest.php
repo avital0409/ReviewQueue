@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Item;
 use App\Mail\ItemBannedMail;
+use App\Models\Item;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class UserBanManagementTest extends TestCase
@@ -24,7 +24,7 @@ class UserBanManagementTest extends TestCase
         $response = $this->postJson('/api/users/ban', [
             'email' => $email,
             'action' => 'ban',
-            'reason' => 'Repeated violations'
+            'reason' => 'Repeated violations',
         ]);
 
         $response->assertStatus(200)
@@ -32,20 +32,20 @@ class UserBanManagementTest extends TestCase
 
         $this->assertDatabaseHas('banned_users', [
             'email' => $email,
-            'ban_reason' => 'Repeated violations'
+            'ban_reason' => 'Repeated violations',
         ]);
 
         // 2. Trigger Unban
         $response = $this->postJson('/api/users/ban', [
             'email' => $email,
-            'action' => 'unban'
+            'action' => 'unban',
         ]);
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
 
         $this->assertDatabaseMissing('banned_users', [
-            'email' => $email
+            'email' => $email,
         ]);
     }
 
@@ -79,7 +79,7 @@ class UserBanManagementTest extends TestCase
 
         $this->assertDatabaseHas('banned_users', [
             'email' => 'infractor@example.com',
-            'ban_reason' => 'Repeated phishing scams.'
+            'ban_reason' => 'Repeated phishing scams.',
         ]);
 
         // Verify banned user email dispatch
@@ -103,7 +103,7 @@ class UserBanManagementTest extends TestCase
             'ban_reason' => 'Phishing campaign',
             'banned_at' => now(),
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         $payload = [
@@ -137,7 +137,7 @@ class UserBanManagementTest extends TestCase
         for ($i = 0; $i < 2; $i++) {
             Item::create([
                 'author_email' => $email,
-                'content' => 'Old violating content ' . $i,
+                'content' => 'Old violating content '.$i,
                 'status' => 'rejected',
                 'risk_score' => 85,
                 'heuristic_flags' => ['financial_keywords'],
@@ -178,7 +178,7 @@ class UserBanManagementTest extends TestCase
         for ($i = 0; $i < 2; $i++) {
             Item::create([
                 'author_email' => $email,
-                'content' => 'Old violating content ' . $i,
+                'content' => 'Old violating content '.$i,
                 'status' => 'rejected',
                 'risk_score' => 85,
                 'heuristic_flags' => ['financial_keywords'],

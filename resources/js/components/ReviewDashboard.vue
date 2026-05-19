@@ -1,11 +1,22 @@
 <template>
-  <div class="flex h-screen w-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased">
+  <div
+    class="flex h-screen w-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased"
+  >
     <!-- Header -->
-    <header class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm z-10">
+    <header
+      class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm z-10"
+    >
       <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-md">
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-md"
+        >
           <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2.5"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
           </svg>
         </div>
         <div>
@@ -17,20 +28,27 @@
 
       <!-- Navigation Tabs -->
       <div class="flex items-center gap-6 text-sm h-full font-bold">
-        <button 
+        <button
           @click="activeTab = 'queue'"
           :class="[
             'h-full px-2 border-b-2 transition-all duration-200',
-            activeTab === 'queue' ? 'text-blue-600 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-transparent'
+            activeTab === 'queue'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-slate-500 hover:text-slate-800 border-transparent',
           ]"
         >
           Moderation Queue
         </button>
-        <button 
-          @click="activeTab = 'users'; fetchUsers()"
+        <button
+          @click="
+            activeTab = 'users';
+            fetchUsers();
+          "
           :class="[
             'h-full px-2 border-b-2 transition-all duration-200',
-            activeTab === 'users' ? 'text-blue-600 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-transparent'
+            activeTab === 'users'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-slate-500 hover:text-slate-800 border-transparent',
           ]"
         >
           User Directory
@@ -38,12 +56,17 @@
       </div>
 
       <div class="flex items-center gap-4">
-        <button 
+        <button
           @click="isModalOpen = true"
           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/10 hover:from-blue-500 hover:to-indigo-500 transition-all focus:outline-none"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2.5"
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           Submit Content
         </button>
@@ -58,15 +81,22 @@
         <div class="border-b border-slate-100 p-4 space-y-4">
           <!-- Search input -->
           <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"
+            >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
-            <input 
+            <input
               v-model="filters.search"
               @input="fetchItems"
-              type="text" 
+              type="text"
               placeholder="Search content, author, flags..."
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
             />
@@ -74,19 +104,21 @@
 
           <!-- Status Filters Row -->
           <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
-            <button 
+            <button
               v-for="statusOpt in ['all', 'pending', 'approved', 'rejected', 'blocked']"
               :key="statusOpt"
               @click="setStatusFilter(statusOpt)"
               :class="[
                 'flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5',
-                filters.status === statusOpt 
-                  ? 'bg-white text-slate-800 shadow-sm border border-slate-200' 
-                  : 'text-slate-500 hover:text-slate-800'
+                filters.status === statusOpt
+                  ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                  : 'text-slate-500 hover:text-slate-800',
               ]"
             >
               {{ statusOpt }}
-              <span class="rounded-full bg-slate-100/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200">
+              <span
+                class="rounded-full bg-slate-100/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200"
+              >
                 {{ counts[statusOpt] }}
               </span>
             </button>
@@ -95,7 +127,7 @@
           <!-- Sort Selector -->
           <div class="flex items-center justify-between text-xs">
             <span class="font-medium text-slate-400">Sort by</span>
-            <select 
+            <select
               v-model="filters.sort"
               @change="fetchItems"
               class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
@@ -110,17 +142,27 @@
         <!-- Scrollable Cards Queue -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
           <!-- Error state -->
-          <div v-if="itemsError" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5">
-            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+          <div
+            v-if="itemsError"
+            class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100"
+            >
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <div class="space-y-1">
               <span class="text-sm font-bold text-slate-700">Failed to Load Queue</span>
               <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ itemsError }}</p>
             </div>
-            <button 
+            <button
               @click="fetchItems"
               class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
             >
@@ -129,33 +171,60 @@
           </div>
 
           <!-- Loading state -->
-          <div v-else-if="loading && filteredItems.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+          <div
+            v-else-if="loading && filteredItems.length === 0"
+            class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3"
+          >
             <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             <span class="text-xs font-semibold tracking-wider uppercase">Loading queue...</span>
           </div>
- 
+
           <!-- Empty Queue state -->
-          <div v-else-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400 gap-2">
-            <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          <div
+            v-else-if="filteredItems.length === 0"
+            class="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400 gap-2"
+          >
+            <svg
+              class="h-10 w-10 text-slate-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
             </svg>
             <span class="text-sm font-bold text-slate-500">Queue Empty</span>
             <span class="text-xs">No items matching your criteria were found.</span>
           </div>
- 
+
           <!-- Cards list -->
-          <div 
-            v-for="item in filteredItems" 
+          <div
+            v-for="item in filteredItems"
             :key="item.id"
             @click="selectItem(item.id)"
             :class="[
               'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
-              activeItemId === item.id 
-                ? 'bg-blue-50/50 border-l-2 border-l-blue-600' 
-                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent'
+              activeItemId === item.id
+                ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
+                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
             ]"
           >
             <!-- Header on card -->
@@ -163,27 +232,43 @@
               <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                 #{{ item.id }}
                 <!-- User Banned Signifier on Sidebar -->
-                <span v-if="item.author_is_banned" class="rounded bg-red-600 px-1 py-0.2 text-[8px] font-bold text-white uppercase">Banned</span>
+                <span
+                  v-if="item.author_is_banned"
+                  class="rounded bg-red-600 px-1 py-0.2 text-[8px] font-bold text-white uppercase"
+                  >Banned</span
+                >
               </span>
               <div class="flex items-center gap-1.5">
                 <!-- Status Badge -->
-                <span :class="[
-                  'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                  item.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
-                  item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
-                  item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
-                  item.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
-                ]">
+                <span
+                  :class="[
+                    'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
+                    item.status === 'pending'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                      : '',
+                    item.status === 'approved'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                      : '',
+                    item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
+                    item.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : '',
+                  ]"
+                >
                   {{ item.status }}
                 </span>
 
                 <!-- Risk Badge -->
-                <span :class="[
-                  'rounded-full px-2 py-0.5 text-[10px] font-bold border',
-                  item.risk_score >= 75 ? 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-500/5' : '',
-                  item.risk_score >= 25 && item.risk_score < 75 ? 'bg-amber-50 text-amber-700 border-amber-200' : '',
-                  item.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : ''
-                ]">
+                <span
+                  :class="[
+                    'rounded-full px-2 py-0.5 text-[10px] font-bold border',
+                    item.risk_score >= 75
+                      ? 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-500/5'
+                      : '',
+                    item.risk_score >= 25 && item.risk_score < 75
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : '',
+                    item.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : '',
+                  ]"
+                >
                   Risk: {{ item.risk_score }}
                 </span>
               </div>
@@ -191,10 +276,16 @@
 
             <!-- Email & Time -->
             <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors truncate max-w-[170px]">{{ item.author_email }}</span>
+              <span
+                class="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors truncate max-w-[170px]"
+                >{{ item.author_email }}</span
+              >
               <div class="flex items-center gap-1.5 shrink-0">
                 <!-- Striking Indicator Badge in Sidebar -->
-                <span v-if="item.author_rejections_count > 0" class="text-[9px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5">
+                <span
+                  v-if="item.author_rejections_count > 0"
+                  class="text-[9px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5"
+                >
                   ⚠️ Strike {{ item.author_rejections_count }}
                 </span>
                 <span class="text-slate-400">{{ formatRelativeTime(item.created_at) }}</span>
@@ -207,9 +298,12 @@
             </p>
 
             <!-- Flags preview -->
-            <div v-if="item.heuristic_flags && item.heuristic_flags.length" class="flex flex-wrap gap-1 mt-1">
-              <span 
-                v-for="flag in item.heuristic_flags" 
+            <div
+              v-if="item.heuristic_flags && item.heuristic_flags.length"
+              class="flex flex-wrap gap-1 mt-1"
+            >
+              <span
+                v-for="flag in item.heuristic_flags"
                 :key="flag"
                 class="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 border border-slate-200"
               >
@@ -224,53 +318,91 @@
       <main class="flex flex-1 flex-col overflow-hidden bg-slate-50 relative">
         <div v-if="activeItem" class="flex h-full flex-col">
           <!-- Detail Header -->
-          <div class="border-b border-slate-200 bg-white p-6 flex items-center justify-between shrink-0 shadow-sm z-10">
+          <div
+            class="border-b border-slate-200 bg-white p-6 flex items-center justify-between shrink-0 shadow-sm z-10"
+          >
             <div class="space-y-1">
               <div class="flex items-center gap-3">
                 <h2 class="text-lg font-bold text-slate-900">Item #{{ activeItem.id }}</h2>
-                <span :class="[
-                  'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider border',
-                  activeItem.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
-                  activeItem.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
-                  activeItem.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
-                  activeItem.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
-                ]">
+                <span
+                  :class="[
+                    'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider border',
+                    activeItem.status === 'pending'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                      : '',
+                    activeItem.status === 'approved'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                      : '',
+                    activeItem.status === 'rejected'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200/60'
+                      : '',
+                    activeItem.status === 'blocked'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300'
+                      : '',
+                  ]"
+                >
                   {{ activeItem.status }}
                 </span>
                 <!-- Header Ban Signifier -->
-                <span v-if="activeItem.author_is_banned" class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-extrabold text-white uppercase border border-red-700 shadow-md">Banned Submitter</span>
+                <span
+                  v-if="activeItem.author_is_banned"
+                  class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-extrabold text-white uppercase border border-red-700 shadow-md"
+                  >Banned Submitter</span
+                >
               </div>
               <p class="text-xs text-slate-500">
-                Submitted by <span class="font-semibold text-slate-700">{{ activeItem.author_email }}</span>
-                • {{ formatRelativeTime(activeItem.created_at) }} ({{ formatDate(activeItem.created_at) }})
+                Submitted by
+                <span class="font-semibold text-slate-700">{{ activeItem.author_email }}</span> •
+                {{ formatRelativeTime(activeItem.created_at) }} ({{
+                  formatDate(activeItem.created_at)
+                }})
               </p>
             </div>
           </div>
 
           <!-- Detail Body Scrollable -->
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div 
-              v-if="activeItem.author_rejections_count >= 2 && activeItem.status === 'pending'" 
+            <div
+              v-if="activeItem.author_rejections_count >= 2 && activeItem.status === 'pending'"
               class="p-4 rounded-2xl border flex items-center gap-3.5 shadow-sm transform transition-all duration-300 animate-pulse"
-              :class="isBanEscalated ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'"
+              :class="
+                isBanEscalated
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              "
             >
               <div class="text-2xl">⚠️</div>
               <div class="space-y-0.5 flex-1">
                 <div class="text-sm font-bold">
-                  {{ isBanEscalated ? 'Strike Escalation: Permanent Ban Recommended!' : 'Repeat Offender Alert: User is at strike limit!' }}
+                  {{
+                    isBanEscalated
+                      ? 'Strike Escalation: Permanent Ban Recommended!'
+                      : 'Repeat Offender Alert: User is at strike limit!'
+                  }}
                 </div>
                 <div class="text-xs">
-                  Submitter has <strong>{{ activeItem.author_rejections_count }} prior rejections</strong>.
-                  {{ isBanEscalated ? 'This post triggers rejection recommendations. Rejecting this content will ban this user from submissions.' : 'Exercise caution. Further rejections will result in a permanent ban.' }}
+                  Submitter has
+                  <strong>{{ activeItem.author_rejections_count }} prior rejections</strong>.
+                  {{
+                    isBanEscalated
+                      ? 'This post triggers rejection recommendations. Rejecting this content will ban this user from submissions.'
+                      : 'Exercise caution. Further rejections will result in a permanent ban.'
+                  }}
                 </div>
               </div>
             </div>
 
             <!-- 1. Submission Content Box -->
             <div class="space-y-2.5">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Content</h3>
-              <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100/50 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-gradient-to-b from-blue-500/2 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500"></div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Submission Content
+              </h3>
+              <div
+                class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100/50 relative overflow-hidden group"
+              >
+                <div
+                  class="absolute inset-0 bg-gradient-to-b from-blue-500/2 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500"
+                ></div>
                 <p class="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap font-sans">
                   {{ activeItem.content }}
                 </p>
@@ -280,18 +412,36 @@
             <!-- 2. Heuristic Analysis Dashboard card -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
               <!-- Score dial gauge card -->
-              <div class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-sm shadow-slate-100/50">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3 block">Heuristic Risk Score</span>
-                
+              <div
+                class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-sm shadow-slate-100/50"
+              >
+                <span
+                  class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3 block"
+                  >Heuristic Risk Score</span
+                >
+
                 <div class="relative flex items-center justify-center h-28 w-28">
                   <!-- SVG Circular Progress Ring -->
                   <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
                     <circle
                       cx="50"
                       cy="50"
                       r="40"
-                      :stroke="activeItem.risk_score >= 75 ? '#ef4444' : (activeItem.risk_score >= 25 ? '#f59e0b' : '#10b981')"
+                      stroke="#f1f5f9"
+                      stroke-width="8"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      :stroke="
+                        activeItem.risk_score >= 75
+                          ? '#ef4444'
+                          : activeItem.risk_score >= 25
+                            ? '#f59e0b'
+                            : '#10b981'
+                      "
                       stroke-width="8"
                       fill="transparent"
                       stroke-dasharray="251.2"
@@ -302,86 +452,162 @@
                   </svg>
 
                   <div class="absolute flex flex-col items-center justify-center z-10">
-                    <span class="text-3xl font-extrabold tracking-tight text-slate-800">{{ activeItem.risk_score }}</span>
+                    <span class="text-3xl font-extrabold tracking-tight text-slate-800">{{
+                      activeItem.risk_score
+                    }}</span>
                     <span class="text-[10px] uppercase font-bold text-slate-450">Risk</span>
                   </div>
                 </div>
 
                 <!-- Rating badge text -->
-                <span :class="[
-                  'mt-3.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                  activeItem.risk_score >= 75 ? 'bg-red-50 text-red-700 border-red-200' : '',
-                  activeItem.risk_score >= 25 && activeItem.risk_score < 75 ? 'bg-amber-50 text-amber-700 border-amber-200' : '',
-                  activeItem.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : ''
-                ]">
-                  {{ activeItem.risk_score >= 75 ? 'CRITICAL RISK' : (activeItem.risk_score >= 25 ? 'MEDIUM RISK' : 'LOW RISK') }}
+                <span
+                  :class="[
+                    'mt-3.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
+                    activeItem.risk_score >= 75 ? 'bg-red-50 text-red-700 border-red-200' : '',
+                    activeItem.risk_score >= 25 && activeItem.risk_score < 75
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : '',
+                    activeItem.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : '',
+                  ]"
+                >
+                  {{
+                    activeItem.risk_score >= 75
+                      ? 'CRITICAL RISK'
+                      : activeItem.risk_score >= 25
+                        ? 'MEDIUM RISK'
+                        : 'LOW RISK'
+                  }}
                 </span>
               </div>
 
               <!-- Recommendation badge card -->
-              <div class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between relative overflow-hidden group shadow-sm shadow-slate-100/50">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Heuristic Auto-Action</span>
-                
+              <div
+                class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between relative overflow-hidden group shadow-sm shadow-slate-100/50"
+              >
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block"
+                  >Heuristic Auto-Action</span
+                >
+
                 <div class="my-4 flex items-center gap-3">
-                  <div :class="[
-                    'h-12 w-12 rounded-xl flex items-center justify-center border',
-                    isBanEscalated ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : '',
-                    !isBanEscalated && activeItem.auto_suggestion === 'reject' ? 'bg-red-50 text-red-600 border-red-100' : '',
-                    activeItem.auto_suggestion === 'approve' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
-                    activeItem.auto_suggestion === 'none' ? 'bg-slate-50 text-slate-500 border-slate-200' : ''
-                  ]">
-                    <svg :class="['h-6 w-6', isBanEscalated ? 'text-red-600' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path v-if="isBanEscalated" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      <path v-else-if="activeItem.auto_suggestion === 'reject'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      <path v-else-if="activeItem.auto_suggestion === 'approve'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div
+                    :class="[
+                      'h-12 w-12 rounded-xl flex items-center justify-center border',
+                      isBanEscalated ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : '',
+                      !isBanEscalated && activeItem.auto_suggestion === 'reject'
+                        ? 'bg-red-50 text-red-600 border-red-100'
+                        : '',
+                      activeItem.auto_suggestion === 'approve'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        : '',
+                      activeItem.auto_suggestion === 'none'
+                        ? 'bg-slate-50 text-slate-500 border-slate-200'
+                        : '',
+                    ]"
+                  >
+                    <svg
+                      :class="['h-6 w-6', isBanEscalated ? 'text-red-600' : '']"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        v-if="isBanEscalated"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                      <path
+                        v-else-if="activeItem.auto_suggestion === 'reject'"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                      <path
+                        v-else-if="activeItem.auto_suggestion === 'approve'"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                      <path
+                        v-else
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
 
                   <div>
                     <span class="text-xs text-slate-400 block font-medium">Auto-Suggestion</span>
-                    <span :class="[
-                      'text-lg font-bold leading-none uppercase',
-                      isBanEscalated ? 'text-red-600' : '',
-                      !isBanEscalated && activeItem.auto_suggestion === 'reject' ? 'text-red-600' : '',
-                      activeItem.auto_suggestion === 'approve' ? 'text-emerald-600' : '',
-                      activeItem.auto_suggestion === 'none' ? 'text-slate-700' : ''
-                    ]">
-                      {{ isBanEscalated ? 'BAN USER' : (activeItem.auto_suggestion === 'none' ? 'MANUAL REVIEW' : activeItem.auto_suggestion) }}
+                    <span
+                      :class="[
+                        'text-lg font-bold leading-none uppercase',
+                        isBanEscalated ? 'text-red-600' : '',
+                        !isBanEscalated && activeItem.auto_suggestion === 'reject'
+                          ? 'text-red-600'
+                          : '',
+                        activeItem.auto_suggestion === 'approve' ? 'text-emerald-600' : '',
+                        activeItem.auto_suggestion === 'none' ? 'text-slate-700' : '',
+                      ]"
+                    >
+                      {{
+                        isBanEscalated
+                          ? 'BAN USER'
+                          : activeItem.auto_suggestion === 'none'
+                            ? 'MANUAL REVIEW'
+                            : activeItem.auto_suggestion
+                      }}
                     </span>
                   </div>
                 </div>
 
                 <p class="text-[10px] text-slate-455 leading-normal">
-                  {{ 
-                    isBanEscalated 
-                      ? 'Automated Escalation: Submitter has 3+ past rejections and this post is suggested for rejection. Permanent suspension is recommended.' 
-                      : (activeItem.auto_suggestion === 'reject' 
-                        ? 'Heuristics triggered high risk spam metrics. Rejection is highly recommended.' 
-                        : (activeItem.auto_suggestion === 'approve' 
-                          ? 'Clean data, cleared automated filters. Approval recommended.' 
-                          : 'Mixed intent. Requires reviewer manually reading context details.'))
+                  {{
+                    isBanEscalated
+                      ? 'Automated Escalation: Submitter has 3+ past rejections and this post is suggested for rejection. Permanent suspension is recommended.'
+                      : activeItem.auto_suggestion === 'reject'
+                        ? 'Heuristics triggered high risk spam metrics. Rejection is highly recommended.'
+                        : activeItem.auto_suggestion === 'approve'
+                          ? 'Clean data, cleared automated filters. Approval recommended.'
+                          : 'Mixed intent. Requires reviewer manually reading context details.'
                   }}
                 </p>
               </div>
 
               <!-- Flagged indicators card -->
-              <div class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between relative overflow-hidden group shadow-sm shadow-slate-100/50">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Triggered Flags</span>
+              <div
+                class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between relative overflow-hidden group shadow-sm shadow-slate-100/50"
+              >
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block"
+                  >Triggered Flags</span
+                >
 
                 <div class="my-3 space-y-1.5 flex-1 flex flex-col justify-center">
-                  <div v-if="!activeItem.heuristic_flags || activeItem.heuristic_flags.length === 0" class="text-xs text-slate-400 italic">
+                  <div
+                    v-if="!activeItem.heuristic_flags || activeItem.heuristic_flags.length === 0"
+                    class="text-xs text-slate-400 italic"
+                  >
                     No automated risk triggers detected.
                   </div>
-                  <div 
-                    v-for="flag in activeItem.heuristic_flags" 
+                  <div
+                    v-for="flag in activeItem.heuristic_flags"
                     :key="flag"
                     :class="[
                       'inline-flex items-center gap-2 rounded-xl py-1.5 px-3 text-xs font-semibold w-full border',
-                      flag === 'financial_keywords' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
-                      flag === 'external_links' ? 'bg-blue-50 text-blue-700 border-blue-200/60' : '',
-                      flag === 'urgent_language' ? 'bg-violet-50 text-violet-700 border-violet-200/60' : '',
-                      flag === 'banned_author' ? 'bg-red-50 text-red-700 border-red-200/60' : ''
+                      flag === 'financial_keywords'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                        : '',
+                      flag === 'external_links'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200/60'
+                        : '',
+                      flag === 'urgent_language'
+                        ? 'bg-violet-50 text-violet-700 border-violet-200/60'
+                        : '',
+                      flag === 'banned_author' ? 'bg-red-50 text-red-700 border-red-200/60' : '',
                     ]"
                   >
                     <span v-if="flag === 'financial_keywords'">💳</span>
@@ -400,16 +626,33 @@
 
             <!-- 3. Reviewer Action Note / Display -->
             <div class="space-y-2.5 pt-4 border-t border-slate-200">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"
+              >
+                <svg
+                  class="h-4 w-4 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
                 Reviewer Resolution Notes
               </h3>
 
-              <div v-if="activeItem.status !== 'pending'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-100/50 space-y-2">
+              <div
+                v-if="activeItem.status !== 'pending'"
+                class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-100/50 space-y-2"
+              >
                 <div class="flex items-center justify-between text-xs text-slate-455">
-                  <span class="font-bold uppercase tracking-wider text-blue-600">Resolution Status: {{ activeItem.status }}</span>
+                  <span class="font-bold uppercase tracking-wider text-blue-600"
+                    >Resolution Status: {{ activeItem.status }}</span
+                  >
                   <span class="font-medium">{{ formatRelativeTime(activeItem.reviewed_at) }}</span>
                 </div>
                 <p class="text-sm text-slate-700 leading-relaxed italic whitespace-pre-wrap">
@@ -417,7 +660,7 @@
                 </p>
               </div>
 
-              <textarea 
+              <textarea
                 v-else
                 v-model="reviewNote"
                 rows="3"
@@ -428,56 +671,95 @@
           </div>
 
           <!-- Detail Actions Bar (Approve / Reject / Ban) -->
-          <div v-if="activeItem.status === 'pending'" class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10">
+          <div
+            v-if="activeItem.status === 'pending'"
+            class="border-t border-slate-200 bg-white p-6 flex items-center justify-end gap-3.5 shrink-0 shadow-sm z-10"
+          >
             <!-- Split Reject/Ban Button Container -->
-            <div class="relative inline-flex items-stretch rounded-xl shadow-lg shadow-red-500/10 reject-split-btn-container">
+            <div
+              class="relative inline-flex items-stretch rounded-xl shadow-lg shadow-red-500/10 reject-split-btn-container"
+            >
               <!-- Primary Reject & Email button -->
-              <button 
-                @click="openRejectionEmailModal" 
+              <button
+                @click="openRejectionEmailModal"
                 :disabled="actioning"
                 class="inline-flex items-center gap-2 rounded-l-xl bg-gradient-to-r px-5 py-3.5 text-sm font-semibold text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all border-r border-red-700/30"
-                :class="isBanEscalated ? 'from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600' : 'from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500'"
+                :class="
+                  isBanEscalated
+                    ? 'from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600'
+                    : 'from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500'
+                "
               >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {{ isBanEscalated ? 'Reject & Ban Submitter' : 'Reject Content' }}
               </button>
-              
+
               <!-- Dropdown trigger button -->
-              <button 
+              <button
                 @click="isRejectDropdownOpen = !isRejectDropdownOpen"
                 :disabled="actioning"
                 class="inline-flex items-center px-3 rounded-r-xl text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                :class="isBanEscalated ? 'bg-gradient-to-r from-rose-700 to-rose-700 hover:from-rose-600 hover:to-rose-600' : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'"
+                :class="
+                  isBanEscalated
+                    ? 'bg-gradient-to-r from-rose-700 to-rose-700 hover:from-rose-600 hover:to-rose-600'
+                    : 'bg-gradient-to-r from-rose-600 to-rose-600 hover:from-rose-500 hover:to-rose-500'
+                "
               >
-                <svg class="h-3 w-3 transform transition-transform duration-250" :class="{ 'rotate-180': isRejectDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                <svg
+                  class="h-3 w-3 transform transition-transform duration-250"
+                  :class="{ 'rotate-180': isRejectDropdownOpen }"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
               <!-- Floating Dropdown list -->
-              <div 
-                v-if="isRejectDropdownOpen" 
+              <div
+                v-if="isRejectDropdownOpen"
                 class="absolute bottom-full right-0 mb-1 w-56 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-1.5 shadow-xl shadow-slate-250/50 z-20 animate-in fade-in slide-in-from-bottom-2 duration-150"
               >
-                <button 
+                <button
                   @click="submitReviewSilently"
                   class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-rose-600 hover:bg-rose-50/80 transition-colors"
                 >
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                    />
                   </svg>
                   Reject Silently (No Email)
                 </button>
                 <!-- Manual Ban trigger in dropdown if not escalated -->
-                <button 
+                <button
                   v-if="!isBanEscalated"
                   @click="openBanEmailModalDirect"
                   class="w-full flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-xs font-bold text-red-700 hover:bg-red-50 transition-colors"
                 >
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
                   </svg>
                   Reject & Ban User
                 </button>
@@ -485,13 +767,18 @@
             </div>
 
             <!-- Approve Button -->
-            <button 
-              @click="submitReview('approved')" 
+            <button
+              @click="submitReview('approved')"
               :disabled="actioning"
               class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-green-500/10 hover:from-green-500 hover:to-emerald-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               Approve Content
             </button>
@@ -499,19 +786,37 @@
         </div>
 
         <!-- Right Pane: Empty State -->
-        <div v-else class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none">
+        <div
+          v-else
+          class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none"
+        >
           <div class="relative flex items-center justify-center mb-6">
-            <div class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"></div>
+            <div
+              class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"
+            ></div>
             <div class="absolute h-24 w-24 rounded-full bg-blue-500/5 blur-xl"></div>
-            <div class="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md">
-              <svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3m8-9a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div
+              class="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md"
+            >
+              <svg
+                class="h-10 w-10 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3m8-9a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </div>
           </div>
           <h2 class="text-xl font-bold text-slate-800 mb-2">Select an item from the queue</h2>
           <p class="text-sm text-slate-400 max-w-sm leading-relaxed">
-            Click on any submitted post, ticket, or report in the left sidebar to analyze its content, review heuristic scans, and make a decision.
+            Click on any submitted post, ticket, or report in the left sidebar to analyze its
+            content, review heuristic scans, and make a decision.
           </p>
         </div>
       </main>
@@ -524,15 +829,22 @@
         <!-- Search and Sorting -->
         <div class="border-b border-slate-100 p-4 space-y-4">
           <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"
+            >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
-            <input 
+            <input
               v-model="userFilters.search"
               @input="fetchUsers"
-              type="text" 
+              type="text"
               placeholder="Search submitters by email..."
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
             />
@@ -540,7 +852,7 @@
 
           <div class="flex items-center justify-between text-xs">
             <span class="font-medium text-slate-400">Sort submitters by</span>
-            <select 
+            <select
               v-model="userFilters.sort"
               @change="fetchUsers"
               class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
@@ -555,17 +867,27 @@
         <!-- Users reputation items list -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
           <!-- Error state -->
-          <div v-if="usersError" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5">
-            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+          <div
+            v-if="usersError"
+            class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100"
+            >
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <div class="space-y-1">
               <span class="text-sm font-bold text-slate-700">Failed to Load Directory</span>
               <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ usersError }}</p>
             </div>
-            <button 
+            <button
               @click="fetchUsers"
               class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
             >
@@ -573,62 +895,96 @@
             </button>
           </div>
 
-          <div v-else-if="usersLoading" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+          <div
+            v-else-if="usersLoading"
+            class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3"
+          >
             <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             <span class="text-xs font-semibold tracking-wider uppercase">Loading Directory...</span>
           </div>
 
-          <div v-else-if="users.length === 0" class="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400 gap-2">
+          <div
+            v-else-if="users.length === 0"
+            class="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400 gap-2"
+          >
             <span class="text-sm font-bold text-slate-500">No Submitters Found</span>
             <span class="text-xs">Try adapting your search filter.</span>
           </div>
 
-          <div 
+          <div
             v-else
-            v-for="user in users" 
+            v-for="user in users"
             :key="user.author_email"
             @click="selectUser(user.author_email)"
             :class="[
               'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
-              activeUserEmail === user.author_email 
-                ? 'bg-blue-50/50 border-l-2 border-l-blue-600' 
-                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent'
+              activeUserEmail === user.author_email
+                ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
+                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
             ]"
           >
             <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-700 truncate max-w-[200px]">{{ user.author_email }}</span>
-              <span :class="[
-                'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
-                user.is_banned ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'
-              ]">
+              <span class="font-bold text-sm text-slate-700 truncate max-w-[200px]">{{
+                user.author_email
+              }}</span>
+              <span
+                :class="[
+                  'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
+                  user.is_banned
+                    ? 'bg-red-100 text-red-700 border-red-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200',
+                ]"
+              >
                 {{ user.is_banned ? 'Banned' : 'Active Account' }}
               </span>
             </div>
 
             <div class="flex items-center justify-between text-xs">
               <div class="flex items-center gap-4 text-slate-500 font-medium">
-                <span>Total: <strong class="text-slate-700">{{ user.total_count }}</strong></span>
-                <span>Approved: <strong class="text-emerald-600">{{ user.approved_count }}</strong></span>
-                <span>Rejected: <strong class="text-rose-600">{{ user.rejected_count }}</strong></span>
-                <span>Blocked: <strong class="text-slate-700">{{ user.blocked_count }}</strong></span>
+                <span
+                  >Total: <strong class="text-slate-700">{{ user.total_count }}</strong></span
+                >
+                <span
+                  >Approved:
+                  <strong class="text-emerald-600">{{ user.approved_count }}</strong></span
+                >
+                <span
+                  >Rejected: <strong class="text-rose-600">{{ user.rejected_count }}</strong></span
+                >
+                <span
+                  >Blocked: <strong class="text-slate-700">{{ user.blocked_count }}</strong></span
+                >
               </div>
-              
+
               <!-- Strike bubbles scorecard -->
               <div class="flex items-center gap-1">
                 <span class="text-[10px] font-bold text-slate-400 mr-1 uppercase">Strikes:</span>
-                <span 
-                  v-for="strike in 3" 
+                <span
+                  v-for="strike in 3"
                   :key="strike"
                   class="h-2.5 w-2.5 rounded-full border border-slate-300 transition-colors"
                   :class="[
                     user.rejected_count >= strike ? 'bg-red-500 border-red-600' : 'bg-slate-100',
-                    user.is_banned ? 'bg-red-600 border-red-700' : ''
+                    user.is_banned ? 'bg-red-600 border-red-700' : '',
                   ]"
                 ></span>
-                <span v-if="user.rejected_count > 3" class="text-xs font-bold text-red-600 ml-1">+{{ user.rejected_count - 3 }}</span>
+                <span v-if="user.rejected_count > 3" class="text-xs font-bold text-red-600 ml-1"
+                  >+{{ user.rejected_count - 3 }}</span
+                >
               </div>
             </div>
           </div>
@@ -639,24 +995,42 @@
       <main class="flex flex-1 flex-col overflow-hidden bg-slate-50 relative">
         <div v-if="activeUserEmail" class="flex h-full flex-col">
           <!-- Submitter details header -->
-          <div class="border-b border-slate-200 bg-white p-6 shrink-0 shadow-sm z-10 flex items-center justify-between">
+          <div
+            class="border-b border-slate-200 bg-white p-6 shrink-0 shadow-sm z-10 flex items-center justify-between"
+          >
             <div class="space-y-1">
-              <h2 class="text-lg font-bold text-slate-900 truncate max-w-lg">{{ activeUserEmail }}</h2>
+              <h2 class="text-lg font-bold text-slate-900 truncate max-w-lg">
+                {{ activeUserEmail }}
+              </h2>
               <p class="text-xs text-slate-500">
                 User reputation analysis & submission audit history.
               </p>
             </div>
-            
-            <button 
+
+            <button
               @click="toggleUserBan"
               class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold border transition-all"
-              :class="userHistoryDetails?.is_banned 
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm'
-                : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'"
+              :class="
+                userHistoryDetails?.is_banned
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm'
+                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'
+              "
             >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path v-if="userHistoryDetails?.is_banned" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                <path
+                  v-if="userHistoryDetails?.is_banned"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                />
               </svg>
               {{ userHistoryDetails?.is_banned ? 'Lift Ban' : 'Ban User' }}
             </button>
@@ -665,70 +1039,102 @@
           <!-- Timeline body -->
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
             <!-- Ban Details Alert Box if Banned -->
-            <div 
-              v-if="userHistoryDetails?.is_banned" 
+            <div
+              v-if="userHistoryDetails?.is_banned"
               class="p-5 rounded-2xl border border-red-200 bg-red-50/50 text-red-800 shadow-inner flex flex-col gap-1.5"
             >
               <div class="text-sm font-extrabold flex items-center gap-2">
                 <span>🚫</span> USER BANNED
               </div>
               <p class="text-xs text-red-700">
-                Suspended at <strong>{{ formatDate(userHistoryDetails.banned_at) }}</strong>.
+                Suspended at <strong>{{ formatDate(userHistoryDetails.banned_at) }}</strong
+                >.
               </p>
-              <p class="text-xs leading-relaxed italic bg-white p-3 rounded-xl border border-red-100 text-red-900 mt-1">
-                <strong>Official Ban Reason:</strong> "{{ userHistoryDetails.ban_reason || 'Repeated violations of guidelines.' }}"
+              <p
+                class="text-xs leading-relaxed italic bg-white p-3 rounded-xl border border-red-100 text-red-900 mt-1"
+              >
+                <strong>Official Ban Reason:</strong> "{{
+                  userHistoryDetails.ban_reason || 'Repeated violations of guidelines.'
+                }}"
               </p>
             </div>
 
             <!-- History Summary Stats Card -->
             <div class="grid grid-cols-4 gap-4">
               <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Posts</span>
-                <div class="text-2xl font-black text-slate-800 mt-1">{{ userHistoryDetails?.history?.length || 0 }}</div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Total Posts</span
+                >
+                <div class="text-2xl font-black text-slate-800 mt-1">
+                  {{ userHistoryDetails?.history?.length || 0 }}
+                </div>
               </div>
               <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Approved</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Approved</span
+                >
                 <div class="text-2xl font-black text-emerald-600 mt-1">
-                  {{ userHistoryDetails?.history?.filter(h => h.status === 'approved').length || 0 }}
+                  {{
+                    userHistoryDetails?.history?.filter((h) => h.status === 'approved').length || 0
+                  }}
                 </div>
               </div>
               <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rejections (Strikes)</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Rejections (Strikes)</span
+                >
                 <div class="text-2xl font-black text-red-600 mt-1">
-                  {{ userHistoryDetails?.history?.filter(h => h.status === 'rejected').length || 0 }}
+                  {{
+                    userHistoryDetails?.history?.filter((h) => h.status === 'rejected').length || 0
+                  }}
                 </div>
               </div>
               <div class="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Blocked</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Blocked</span
+                >
                 <div class="text-2xl font-black text-slate-750 mt-1">
-                  {{ userHistoryDetails?.history?.filter(h => h.status === 'blocked').length || 0 }}
+                  {{
+                    userHistoryDetails?.history?.filter((h) => h.status === 'blocked').length || 0
+                  }}
                 </div>
               </div>
             </div>
 
             <!-- Submission Chronological timeline list -->
             <div class="space-y-4">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Audit Trails</h3>
-              
-              <div v-if="userHistoryError" class="bg-red-50 border border-red-100 rounded-2xl p-5 text-center text-xs text-red-650 space-y-2 max-w-md mx-auto my-6">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Submission Audit Trails
+              </h3>
+
+              <div
+                v-if="userHistoryError"
+                class="bg-red-50 border border-red-100 rounded-2xl p-5 text-center text-xs text-red-650 space-y-2 max-w-md mx-auto my-6"
+              >
                 <p><strong>Error:</strong> {{ userHistoryError }}</p>
-                <button 
+                <button
                   @click="selectUser(activeUserEmail)"
                   class="rounded-xl border border-red-200 bg-white hover:bg-red-100/50 px-3 py-1.5 text-[11px] font-semibold text-red-700 transition-all shadow-sm mx-auto block"
                 >
                   Retry Loading
                 </button>
               </div>
-              <div v-else-if="userHistoryLoading" class="text-center py-8 text-xs text-slate-400 italic">
+              <div
+                v-else-if="userHistoryLoading"
+                class="text-center py-8 text-xs text-slate-400 italic"
+              >
                 Loading history timeline...
               </div>
-              <div v-else-if="!userHistoryDetails?.history || userHistoryDetails.history.length === 0" class="text-center py-8 text-xs text-slate-400 italic">
+              <div
+                v-else-if="!userHistoryDetails?.history || userHistoryDetails.history.length === 0"
+                class="text-center py-8 text-xs text-slate-400 italic"
+              >
                 No submissions recorded for this email address.
               </div>
-              
-              <div 
+
+              <div
                 v-else
-                v-for="audit in userHistoryDetails.history" 
+                v-for="audit in userHistoryDetails.history"
                 :key="audit.id"
                 class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-slate-300 transition-all"
               >
@@ -736,13 +1142,23 @@
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-800">#{{ audit.id }}</span>
-                    <span :class="[
-                      'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                      audit.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : '',
-                      audit.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : '',
-                      audit.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
-                      audit.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : ''
-                    ]">
+                    <span
+                      :class="[
+                        'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
+                        audit.status === 'pending'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                          : '',
+                        audit.status === 'approved'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                          : '',
+                        audit.status === 'rejected'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200/60'
+                          : '',
+                        audit.status === 'blocked'
+                          ? 'bg-slate-100 text-slate-700 border-slate-300'
+                          : '',
+                      ]"
+                    >
                       {{ audit.status }}
                     </span>
                   </div>
@@ -755,51 +1171,76 @@
                 </p>
 
                 <!-- Reviewer Notes if resolved -->
-                <div v-if="audit.reviewer_note" class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs italic text-slate-650">
+                <div
+                  v-if="audit.reviewer_note"
+                  class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs italic text-slate-650"
+                >
                   <strong>Moderator Notes:</strong> "{{ audit.reviewer_note }}"
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-else class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none">
+        <div
+          v-else
+          class="flex h-full flex-col items-center justify-center text-center p-8 bg-slate-50 select-none"
+        >
           <div class="relative flex items-center justify-center mb-6">
-            <div class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"></div>
-            <div class="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md">
-              <svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            <div
+              class="absolute h-36 w-36 rounded-full bg-blue-500/5 animate-ping duration-1000"
+            ></div>
+            <div
+              class="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-md"
+            >
+              <svg
+                class="h-10 w-10 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
             </div>
           </div>
-          <h2 class="text-xl font-bold text-slate-800 mb-2">Select a submitter from the directory</h2>
+          <h2 class="text-xl font-bold text-slate-800 mb-2">
+            Select a submitter from the directory
+          </h2>
           <p class="text-sm text-slate-400 max-w-sm leading-relaxed">
-            Click on any submitter profile card in the left list view to audit their complete history, view approval metrics, and trigger ban states.
+            Click on any submitter profile card in the left list view to audit their complete
+            history, view approval metrics, and trigger ban states.
           </p>
         </div>
       </main>
     </div>
 
     <!-- Submit modal component -->
-    <SubmitItemModal 
-      :isOpen="isModalOpen" 
-      @close="isModalOpen = false" 
+    <SubmitItemModal
+      :isOpen="isModalOpen"
+      @close="isModalOpen = false"
       @submitted="handleItemSubmitted"
     />
 
     <!-- Rejection & Ban Email Modal component -->
-    <RejectionEmailModal 
-      :isOpen="isRejectionEmailModalOpen" 
+    <RejectionEmailModal
+      :isOpen="isRejectionEmailModalOpen"
       :item="activeItem"
       :reviewerNote="reviewNote"
       :prefetchedDraft="activeItem ? prefetchedDrafts[activeItem.id] : null"
       :isBan="isBanModalEscalated"
-      @close="isRejectionEmailModalOpen = false" 
+      @close="isRejectionEmailModalOpen = false"
       @confirm="handleRejectionConfirmed"
     />
 
     <!-- Toast Notification Stack -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-      <TransitionGroup 
+    <div
+      class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"
+    >
+      <TransitionGroup
         enter-active-class="transform ease-out duration-300 transition"
         enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
         enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
@@ -807,33 +1248,56 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div 
-          v-for="toast in notifications" 
+        <div
+          v-for="toast in notifications"
           :key="toast.id"
           class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border border-slate-100 bg-white/90 backdrop-blur-md p-4 shadow-xl shadow-slate-200/50 flex items-start gap-3"
         >
-          <div :class="[
-            'h-8 w-8 rounded-xl flex items-center justify-center border shrink-0',
-            toast.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
-            toast.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' : '',
-            toast.type === 'error' ? 'bg-rose-50 text-rose-600 border-rose-100' : ''
-          ]">
-            <svg v-if="toast.type === 'success'" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4" />
+          <div
+            :class="[
+              'h-8 w-8 rounded-xl flex items-center justify-center border shrink-0',
+              toast.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
+              toast.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' : '',
+              toast.type === 'error' ? 'bg-rose-50 text-rose-600 border-rose-100' : '',
+            ]"
+          >
+            <svg
+              v-if="toast.type === 'success'"
+              class="h-4.5 w-4.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M9 12l2 2 4-4"
+              />
             </svg>
             <svg v-else class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
           <div class="flex-1 space-y-0.5 pt-0.5">
             <p class="text-xs font-bold text-slate-700 leading-normal">{{ toast.message }}</p>
           </div>
-          <button 
-            @click="notifications = notifications.filter(n => n.id !== toast.id)"
+          <button
+            @click="notifications = notifications.filter((n) => n.id !== toast.id)"
             class="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -870,7 +1334,7 @@ const showToast = (message, type = 'success') => {
   const id = Date.now() + Math.random().toString(36).substr(2, 9);
   notifications.value.push({ id, message, type });
   setTimeout(() => {
-    notifications.value = notifications.value.filter(n => n.id !== id);
+    notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 4500);
 };
 
@@ -888,20 +1352,22 @@ const userHistoryError = ref(null);
 const filters = reactive({
   search: '',
   status: 'pending',
-  sort: 'newest'
+  sort: 'newest',
 });
 
 const userFilters = reactive({
   search: '',
-  sort: 'violations'
+  sort: 'violations',
 });
 
 // Strike auto-suggestion escalation checks
 const isBanEscalated = computed(() => {
-  return activeItem.value && 
-         activeItem.value.status === 'pending' &&
-         activeItem.value.author_rejections_count >= 2 && 
-         activeItem.value.auto_suggestion !== 'approve';
+  return (
+    activeItem.value &&
+    activeItem.value.status === 'pending' &&
+    activeItem.value.author_rejections_count >= 2 &&
+    activeItem.value.auto_suggestion !== 'approve'
+  );
 });
 
 // Decides if modal operates in suspension or rejection notice layout
@@ -911,13 +1377,13 @@ const isBanModalEscalated = computed(() => {
 
 // Computed Active Queue Item detail
 const activeItem = computed(() => {
-  return items.value.find(item => item.id === activeItemId.value) || null;
+  return items.value.find((item) => item.id === activeItemId.value) || null;
 });
 
 // Computed list of filtered items matching the current status tab filter
 const filteredItems = computed(() => {
   if (filters.status === 'all') return items.value;
-  return items.value.filter(item => item.status === filters.status);
+  return items.value.filter((item) => item.status === filters.status);
 });
 
 // Set Status Tab filter
@@ -935,18 +1401,19 @@ const fetchItems = async () => {
     const response = await axios.get('/api/items', { params: filters });
     items.value = response.data.items;
     counts.value = response.data.counts;
- 
-    if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
+
+    if (activeItemId.value && !items.value.some((item) => item.id === activeItemId.value)) {
       activeItemId.value = null;
     }
- 
+
     if (!activeItemId.value && items.value.length > 0) {
       activeItemId.value = items.value[0].id;
     }
     console.log(`[ReviewDashboard] fetchItems succeeded, retrieved ${items.value.length} items.`);
   } catch (err) {
     console.error('[ReviewDashboard] Error fetching review items:', err);
-    itemsError.value = 'Failed to load review items queue. Please check your connection and try again.';
+    itemsError.value =
+      'Failed to load review items queue. Please check your connection and try again.';
   } finally {
     loading.value = false;
   }
@@ -960,8 +1427,11 @@ const fetchUsers = async () => {
   try {
     const response = await axios.get('/api/users', { params: userFilters });
     users.value = response.data.users;
-    
-    if (activeUserEmail.value && !users.value.some(u => u.author_email === activeUserEmail.value)) {
+
+    if (
+      activeUserEmail.value &&
+      !users.value.some((u) => u.author_email === activeUserEmail.value)
+    ) {
       activeUserEmail.value = null;
     }
     console.log(`[ReviewDashboard] fetchUsers succeeded, retrieved ${users.value.length} users.`);
@@ -982,7 +1452,10 @@ const selectUser = async (email) => {
   try {
     const response = await axios.get(`/api/users/${email}/history`);
     userHistoryDetails.value = response.data;
-    console.log('[ReviewDashboard] selectUser loaded reputation details successfully:', response.data);
+    console.log(
+      '[ReviewDashboard] selectUser loaded reputation details successfully:',
+      response.data
+    );
   } catch (err) {
     console.error('[ReviewDashboard] Failed to load user history:', err);
     userHistoryError.value = 'Failed to load user reputation history details.';
@@ -996,15 +1469,17 @@ const toggleUserBan = async () => {
   if (!activeUserEmail.value) return;
   const isCurrentlyBanned = userHistoryDetails.value?.is_banned;
   const nextAction = isCurrentlyBanned ? 'unban' : 'ban';
-  console.log(`[ReviewDashboard] toggleUserBan action triggered. Email: ${activeUserEmail.value}, action: ${nextAction}`);
-  
+  console.log(
+    `[ReviewDashboard] toggleUserBan action triggered. Email: ${activeUserEmail.value}, action: ${nextAction}`
+  );
+
   try {
     const res = await axios.post('/api/users/ban', {
       email: activeUserEmail.value,
       action: nextAction,
-      reason: 'Banned manually via User reputation directory.'
+      reason: 'Banned manually via User reputation directory.',
     });
-    
+
     // Refresh states
     await selectUser(activeUserEmail.value);
     await fetchUsers();
@@ -1041,7 +1516,7 @@ const openBanEmailModalDirect = () => {
 // Proactively prefetch rejection draft
 const prefetchRejectionDraft = async (item) => {
   if (!item || item.status !== 'pending') return;
-  
+
   const currentNote = reviewNote.value;
   if (prefetchedDrafts.value[item.id] && prefetchedDrafts.value[item.id].note === currentNote) {
     return;
@@ -1051,12 +1526,12 @@ const prefetchRejectionDraft = async (item) => {
 
   try {
     const response = await axios.post(`/api/items/${item.id}/rejection-draft`, {
-      reviewer_note: currentNote
+      reviewer_note: currentNote,
     });
     prefetchedDrafts.value[item.id] = {
       loading: false,
       draft: response.data.draft || '',
-      note: currentNote
+      note: currentNote,
     };
   } catch (err) {
     console.error('Failed to prefetch rejection email draft:', err);
@@ -1065,14 +1540,18 @@ const prefetchRejectionDraft = async (item) => {
 };
 
 // Proactively trigger draft prefetching when selection changes
-watch(activeItemId, (newId) => {
-  if (newId) {
-    const item = items.value.find(i => i.id === newId);
-    if (item && item.status === 'pending') {
-      prefetchRejectionDraft(item);
+watch(
+  activeItemId,
+  (newId) => {
+    if (newId) {
+      const item = items.value.find((i) => i.id === newId);
+      if (item && item.status === 'pending') {
+        prefetchRejectionDraft(item);
+      }
     }
-  }
-}, { immediate: true });
+  },
+  { immediate: true }
+);
 
 // Select card item in left sidebar queue
 const selectItem = (id) => {
@@ -1092,7 +1571,13 @@ const formatFlagName = (flag) => {
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 const formatRelativeTime = (dateStr) => {
@@ -1116,11 +1601,14 @@ const submitReview = async (status) => {
 
   actioning.value = true;
   const currentId = activeItemId.value;
-  console.log('[ReviewDashboard] submitReview resolution triggered:', { itemId: currentId, status, note: reviewNote.value });
-  const nextItem = getNextPendingItemAfter(currentId);
+  console.log('[ReviewDashboard] submitReview resolution triggered:', {
+    itemId: currentId,
+    status,
+    note: reviewNote.value,
+  });
 
   // Optimistic UI updates
-  const currentItemIndex = items.value.findIndex(item => item.id === currentId);
+  const currentItemIndex = items.value.findIndex((item) => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = status;
     items.value[currentItemIndex].reviewer_note = reviewNote.value;
@@ -1131,7 +1619,7 @@ const submitReview = async (status) => {
 
   const payload = {
     status: status,
-    reviewer_note: reviewNote.value
+    reviewer_note: reviewNote.value,
   };
   reviewNote.value = '';
 
@@ -1156,11 +1644,15 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
 
   actioning.value = true;
   const currentId = activeItemId.value;
-  console.log('[ReviewDashboard] handleRejectionConfirmed triggered:', { itemId: currentId, sendEmail, banUser, banReason });
-  const nextItem = getNextPendingItemAfter(currentId);
+  console.log('[ReviewDashboard] handleRejectionConfirmed triggered:', {
+    itemId: currentId,
+    sendEmail,
+    banUser,
+    banReason,
+  });
 
   // Optimistic UI updates
-  const currentItemIndex = items.value.findIndex(item => item.id === currentId);
+  const currentItemIndex = items.value.findIndex((item) => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = 'rejected';
     items.value[currentItemIndex].reviewer_note = reviewNote.value;
@@ -1178,14 +1670,17 @@ const handleRejectionConfirmed = async ({ sendEmail, emailBody, banUser, banReas
     send_email: sendEmail,
     email_body: emailBody,
     ban_user: banUser,
-    ban_reason: banReason
+    ban_reason: banReason,
   };
   reviewNote.value = '';
 
   try {
     const res = await axios.patch(`/api/items/${currentId}/review`, payload);
-    console.log(`[ReviewDashboard] handleRejectionConfirmed PATCH resolved successfully for #${currentId}. Blocked count:`, res.data?.blocked_count);
-    
+    console.log(
+      `[ReviewDashboard] handleRejectionConfirmed PATCH resolved successfully for #${currentId}. Blocked count:`,
+      res.data?.blocked_count
+    );
+
     if (banUser) {
       let msg = `Submission #${currentId} rejected & user permanently suspended!`;
       if (res.data && res.data.blocked_count > 0) {
@@ -1214,11 +1709,13 @@ const submitReviewSilently = async () => {
 
   actioning.value = true;
   const currentId = activeItemId.value;
-  console.log('[ReviewDashboard] submitReviewSilently triggered:', { itemId: currentId, note: reviewNote.value });
-  const nextItem = getNextPendingItemAfter(currentId);
+  console.log('[ReviewDashboard] submitReviewSilently triggered:', {
+    itemId: currentId,
+    note: reviewNote.value,
+  });
 
   // Optimistic UI updates
-  const currentItemIndex = items.value.findIndex(item => item.id === currentId);
+  const currentItemIndex = items.value.findIndex((item) => item.id === currentId);
   if (currentItemIndex !== -1) {
     items.value[currentItemIndex].status = 'rejected';
     items.value[currentItemIndex].reviewer_note = reviewNote.value;
@@ -1230,13 +1727,15 @@ const submitReviewSilently = async () => {
   const payload = {
     status: 'rejected',
     reviewer_note: reviewNote.value,
-    send_email: false
+    send_email: false,
   };
   reviewNote.value = '';
 
   try {
     await axios.patch(`/api/items/${currentId}/review`, payload);
-    console.log(`[ReviewDashboard] submitReviewSilently PATCH resolved successfully for #${currentId}`);
+    console.log(
+      `[ReviewDashboard] submitReviewSilently PATCH resolved successfully for #${currentId}`
+    );
     showToast(`Submission #${currentId} silently rejected.`, 'success');
     await fetchItemsSilent();
   } catch (err) {
@@ -1249,7 +1748,7 @@ const submitReviewSilently = async () => {
 };
 
 const getNextPendingItemAfter = (currentItemId) => {
-  const currentIdx = items.value.findIndex(item => item.id === currentItemId);
+  const currentIdx = items.value.findIndex((item) => item.id === currentItemId);
   if (currentIdx === -1) return null;
 
   for (let i = currentIdx + 1; i < items.value.length; i++) {
@@ -1273,7 +1772,7 @@ const fetchItemsSilent = async () => {
     items.value = response.data.items;
     counts.value = response.data.counts;
 
-    if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
+    if (activeItemId.value && !items.value.some((item) => item.id === activeItemId.value)) {
       if (items.value.length > 0) {
         activeItemId.value = items.value[0].id;
       } else {
@@ -1326,4 +1825,3 @@ onUnmounted(() => {
   background: #475569;
 }
 </style>
-
