@@ -307,73 +307,7 @@
             <!-- 2. Heuristic Analysis Dashboard card -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
               <!-- Score dial gauge card -->
-              <div
-                class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-sm shadow-slate-100/50"
-              >
-                <span
-                  class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3 block"
-                  >Heuristic Risk Score</span
-                >
-
-                <div class="relative flex items-center justify-center h-28 w-28">
-                  <!-- SVG Circular Progress Ring -->
-                  <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#f1f5f9"
-                      stroke-width="8"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      :stroke="
-                        activeItem.risk_score >= 75
-                          ? '#ef4444'
-                          : activeItem.risk_score >= 25
-                            ? '#f59e0b'
-                            : '#10b981'
-                      "
-                      stroke-width="8"
-                      fill="transparent"
-                      stroke-dasharray="251.2"
-                      :stroke-dashoffset="251.2 - (251.2 * activeItem.risk_score) / 100"
-                      stroke-linecap="round"
-                      class="transition-all duration-1000 ease-out"
-                    />
-                  </svg>
-
-                  <div class="absolute flex flex-col items-center justify-center z-10">
-                    <span class="text-3xl font-extrabold tracking-tight text-slate-800">{{
-                      activeItem.risk_score
-                    }}</span>
-                    <span class="text-[10px] uppercase font-bold text-slate-450">Risk</span>
-                  </div>
-                </div>
-
-                <!-- Rating badge text -->
-                <span
-                  :class="[
-                    'mt-3.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                    activeItem.risk_score >= 75 ? 'bg-red-50 text-red-700 border-red-200' : '',
-                    activeItem.risk_score >= 25 && activeItem.risk_score < 75
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : '',
-                    activeItem.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : '',
-                  ]"
-                >
-                  {{
-                    activeItem.risk_score >= 75
-                      ? 'CRITICAL RISK'
-                      : activeItem.risk_score >= 25
-                        ? 'MEDIUM RISK'
-                        : 'LOW RISK'
-                  }}
-                </span>
-              </div>
+              <RiskScoreDial :score="activeItem.risk_score" />
 
               <!-- Recommendation badge card -->
               <div
@@ -1074,6 +1008,7 @@ import StatusBadge from './StatusBadge.vue';
 import ToastNotification from './ToastNotification.vue';
 import UserListItem from './UserListItem.vue';
 import ModerationItemCard from './ModerationItemCard.vue';
+import RiskScoreDial from './RiskScoreDial.vue';
 
 // Tab controls
 const activeTab = ref('queue'); // Tabs: 'queue' or 'users'
