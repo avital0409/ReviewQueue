@@ -11,7 +11,12 @@ class GeminiService
 
     public function __construct()
     {
-        $this->apiKey = env('GEMINI_API_KEY');
+        // Try to fetch from Laravel's parsed .env first, then fall back to OS getenv()
+        $this->apiKey = env('GEMINI_API_KEY') ?: getenv('GEMINI_API_KEY');
+
+        if (empty($this->apiKey)) {
+            $this->apiKey = null;
+        }
     }
 
     /**
