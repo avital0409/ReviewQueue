@@ -13,28 +13,33 @@ services:
       - APP_DEBUG=true
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/html/database/database.sqlite
-      - OLLAMA_URL=http://ollama:11434
+      # Bridges to host machine's native Ollama service (if running)
+      - OLLAMA_URL=http://host.docker.internal:11434
       - OLLAMA_MODEL=llama3
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      - ollama
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
+  # =========================================================================
+  # OPTIONAL: Standalone Containerized Ollama
+  # (Uncomment the services below if you want Docker to run Ollama inside a
+  # container. Note: Requires significant CPU/RAM allocation in Docker WSL2)
+  # =========================================================================
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #
+  # ollama-pull:
+  #   image: ollama/ollama:latest
+  #   depends_on:
+  #     - ollama
+  #   entrypoint: /bin/sh
+  #   command: -c "sleep 3 && ollama pull llama3"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #
+  # volumes:
+  #   ollama_data:
 
-  ollama-pull:
-    image: ollama/ollama:latest
-    depends_on:
-      - ollama
-    entrypoint: /bin/sh
-    command: -c "sleep 3 && ollama pull llama3"
-    volumes:
-      - ollama_data:/root/.ollama
-
-volumes:
-  ollama_data:
