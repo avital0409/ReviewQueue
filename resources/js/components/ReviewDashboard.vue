@@ -109,8 +109,27 @@
 
         <!-- Scrollable Cards Queue -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+          <!-- Error state -->
+          <div v-if="itemsError" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5">
+            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <span class="text-sm font-bold text-slate-700">Failed to Load Queue</span>
+              <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ itemsError }}</p>
+            </div>
+            <button 
+              @click="fetchItems"
+              class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
+            >
+              Retry Connection
+            </button>
+          </div>
+
           <!-- Loading state -->
-          <div v-if="loading && filteredItems.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+          <div v-else-if="loading && filteredItems.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
             <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -536,7 +555,26 @@
 
         <!-- Users reputation items list -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
-          <div v-if="usersLoading" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+          <!-- Error state -->
+          <div v-if="usersError" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3.5">
+            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <span class="text-sm font-bold text-slate-700">Failed to Load Directory</span>
+              <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">{{ usersError }}</p>
+            </div>
+            <button 
+              @click="fetchUsers"
+              class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-all shadow-sm"
+            >
+              Retry Connection
+            </button>
+          </div>
+
+          <div v-else-if="usersLoading" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
             <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -673,7 +711,16 @@
             <div class="space-y-4">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Audit Trails</h3>
               
-              <div v-if="userHistoryLoading" class="text-center py-8 text-xs text-slate-400 italic">
+              <div v-if="userHistoryError" class="bg-red-50 border border-red-100 rounded-2xl p-5 text-center text-xs text-red-650 space-y-2 max-w-md mx-auto my-6">
+                <p><strong>Error:</strong> {{ userHistoryError }}</p>
+                <button 
+                  @click="selectUser(activeUserEmail)"
+                  class="rounded-xl border border-red-200 bg-white hover:bg-red-100/50 px-3 py-1.5 text-[11px] font-semibold text-red-700 transition-all shadow-sm mx-auto block"
+                >
+                  Retry Loading
+                </button>
+              </div>
+              <div v-else-if="userHistoryLoading" class="text-center py-8 text-xs text-slate-400 italic">
                 Loading history timeline...
               </div>
               <div v-else-if="!userHistoryDetails?.history || userHistoryDetails.history.length === 0" class="text-center py-8 text-xs text-slate-400 italic">
@@ -782,6 +829,10 @@ const activeUserEmail = ref(null);
 const userHistoryDetails = ref(null);
 const userHistoryLoading = ref(false);
 
+const itemsError = ref(null);
+const usersError = ref(null);
+const userHistoryError = ref(null);
+
 const filters = reactive({
   search: '',
   status: 'pending',
@@ -826,20 +877,22 @@ const setStatusFilter = (status) => {
 // Fetch items from queue API
 const fetchItems = async () => {
   loading.value = true;
+  itemsError.value = null;
   try {
     const response = await axios.get('/api/items', { params: filters });
     items.value = response.data.items;
     counts.value = response.data.counts;
-
+ 
     if (activeItemId.value && !items.value.some(item => item.id === activeItemId.value)) {
       activeItemId.value = null;
     }
-
+ 
     if (!activeItemId.value && items.value.length > 0) {
       activeItemId.value = items.value[0].id;
     }
   } catch (err) {
     console.error('Error fetching review items:', err);
+    itemsError.value = 'Failed to load review items queue. Please check your connection and try again.';
   } finally {
     loading.value = false;
   }
@@ -848,6 +901,7 @@ const fetchItems = async () => {
 // Fetch users directory list
 const fetchUsers = async () => {
   usersLoading.value = true;
+  usersError.value = null;
   try {
     const response = await axios.get('/api/users', { params: userFilters });
     users.value = response.data.users;
@@ -857,6 +911,7 @@ const fetchUsers = async () => {
     }
   } catch (err) {
     console.error('Error fetching user directory:', err);
+    usersError.value = 'Failed to load user directory. Please try again.';
   } finally {
     usersLoading.value = false;
   }
@@ -866,11 +921,13 @@ const fetchUsers = async () => {
 const selectUser = async (email) => {
   activeUserEmail.value = email;
   userHistoryLoading.value = true;
+  userHistoryError.value = null;
   try {
     const response = await axios.get(`/api/users/${email}/history`);
     userHistoryDetails.value = response.data;
   } catch (err) {
     console.error('Failed to load user history:', err);
+    userHistoryError.value = 'Failed to load user reputation history details.';
   } finally {
     userHistoryLoading.value = false;
   }
