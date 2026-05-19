@@ -216,101 +216,15 @@
           </div>
 
           <!-- Cards list -->
-          <div
+          <ModerationItemCard
             v-for="item in filteredItems"
             :key="item.id"
-            :class="[
-              'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
-              activeItemId === item.id
-                ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
-                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
-            ]"
-            @click="selectItem(item.id)"
-          >
-            <!-- Header on card -->
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                #{{ item.id }}
-                <!-- User Banned Signifier on Sidebar -->
-                <span
-                  v-if="item.author_is_banned"
-                  class="rounded bg-red-600 px-1 py-0.2 text-[8px] font-bold text-white uppercase"
-                  >Banned</span
-                >
-              </span>
-              <div class="flex items-center gap-1.5">
-                <!-- Status Badge -->
-                <span
-                  :class="[
-                    'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                    item.status === 'pending'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200/60'
-                      : '',
-                    item.status === 'approved'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                      : '',
-                    item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/60' : '',
-                    item.status === 'blocked' ? 'bg-slate-100 text-slate-700 border-slate-300' : '',
-                  ]"
-                >
-                  {{ item.status }}
-                </span>
-
-                <!-- Risk Badge -->
-                <span
-                  :class="[
-                    'rounded-full px-2 py-0.5 text-[10px] font-bold border',
-                    item.risk_score >= 75
-                      ? 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-500/5'
-                      : '',
-                    item.risk_score >= 25 && item.risk_score < 75
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : '',
-                    item.risk_score < 25 ? 'bg-green-50 text-green-700 border-green-200' : '',
-                  ]"
-                >
-                  Risk: {{ item.risk_score }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Email & Time -->
-            <div class="flex items-center justify-between text-xs">
-              <span
-                class="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors truncate max-w-[170px]"
-                >{{ item.author_email }}</span
-              >
-              <div class="flex items-center gap-1.5 shrink-0">
-                <!-- Striking Indicator Badge in Sidebar -->
-                <span
-                  v-if="item.author_rejections_count > 0"
-                  class="text-[9px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5"
-                >
-                  ⚠️ Strike {{ item.author_rejections_count }}
-                </span>
-                <span class="text-slate-400">{{ formatRelativeTime(item.created_at) }}</span>
-              </div>
-            </div>
-
-            <!-- Truncated Content text -->
-            <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-              {{ item.content }}
-            </p>
-
-            <!-- Flags preview -->
-            <div
-              v-if="item.heuristic_flags && item.heuristic_flags.length"
-              class="flex flex-wrap gap-1 mt-1"
-            >
-              <span
-                v-for="flag in item.heuristic_flags"
-                :key="flag"
-                class="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 border border-slate-200"
-              >
-                {{ formatFlagName(flag) }}
-              </span>
-            </div>
-          </div>
+            :item="item"
+            :is-active="activeItemId === item.id"
+            :format-relative-time="formatRelativeTime"
+            :format-flag-name="formatFlagName"
+            @select="selectItem"
+          />
         </div>
       </aside>
 
@@ -324,25 +238,7 @@
             <div class="space-y-1">
               <div class="flex items-center gap-3">
                 <h2 class="text-lg font-bold text-slate-900">Item #{{ activeItem.id }}</h2>
-                <span
-                  :class="[
-                    'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider border',
-                    activeItem.status === 'pending'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200/60'
-                      : '',
-                    activeItem.status === 'approved'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                      : '',
-                    activeItem.status === 'rejected'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200/60'
-                      : '',
-                    activeItem.status === 'blocked'
-                      ? 'bg-slate-100 text-slate-700 border-slate-300'
-                      : '',
-                  ]"
-                >
-                  {{ activeItem.status }}
-                </span>
+                <StatusBadge type="status" :value="activeItem.status" class="text-xs px-2.5 py-0.5" />
                 <!-- Header Ban Signifier -->
                 <span
                   v-if="activeItem.author_is_banned"
@@ -925,69 +821,13 @@
             <span class="text-xs">Try adapting your search filter.</span>
           </div>
 
-          <div
+          <UserListItem
             v-for="user in users"
-            v-else
             :key="user.author_email"
-            :class="[
-              'group p-4 flex flex-col gap-2.5 cursor-pointer relative overflow-hidden transition-all',
-              activeUserEmail === user.author_email
-                ? 'bg-blue-50/50 border-l-2 border-l-blue-600'
-                : 'hover:bg-slate-50/50 border-l-2 border-l-transparent',
-            ]"
-            @click="selectUser(user.author_email)"
-          >
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-700 truncate max-w-[200px]">{{
-                user.author_email
-              }}</span>
-              <span
-                :class="[
-                  'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
-                  user.is_banned
-                    ? 'bg-red-100 text-red-700 border-red-200'
-                    : 'bg-slate-100 text-slate-600 border-slate-200',
-                ]"
-              >
-                {{ user.is_banned ? 'Banned' : 'Active Account' }}
-              </span>
-            </div>
-
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-4 text-slate-500 font-medium">
-                <span
-                  >Total: <strong class="text-slate-700">{{ user.total_count }}</strong></span
-                >
-                <span
-                  >Approved:
-                  <strong class="text-emerald-600">{{ user.approved_count }}</strong></span
-                >
-                <span
-                  >Rejected: <strong class="text-rose-600">{{ user.rejected_count }}</strong></span
-                >
-                <span
-                  >Blocked: <strong class="text-slate-700">{{ user.blocked_count }}</strong></span
-                >
-              </div>
-
-              <!-- Strike bubbles scorecard -->
-              <div class="flex items-center gap-1">
-                <span class="text-[10px] font-bold text-slate-400 mr-1 uppercase">Strikes:</span>
-                <span
-                  v-for="strike in 3"
-                  :key="strike"
-                  class="h-2.5 w-2.5 rounded-full border border-slate-300 transition-colors"
-                  :class="[
-                    user.rejected_count >= strike ? 'bg-red-500 border-red-600' : 'bg-slate-100',
-                    user.is_banned ? 'bg-red-600 border-red-700' : '',
-                  ]"
-                ></span>
-                <span v-if="user.rejected_count > 3" class="text-xs font-bold text-red-600 ml-1"
-                  >+{{ user.rejected_count - 3 }}</span
-                >
-              </div>
-            </div>
-          </div>
+            :user="user"
+            :is-active="activeUserEmail === user.author_email"
+            @select="selectUser"
+          />
         </div>
       </aside>
 
@@ -1142,25 +982,7 @@
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-800">#{{ audit.id }}</span>
-                    <span
-                      :class="[
-                        'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border',
-                        audit.status === 'pending'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200/60'
-                          : '',
-                        audit.status === 'approved'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                          : '',
-                        audit.status === 'rejected'
-                          ? 'bg-rose-50 text-rose-700 border-rose-200/60'
-                          : '',
-                        audit.status === 'blocked'
-                          ? 'bg-slate-100 text-slate-700 border-slate-300'
-                          : '',
-                      ]"
-                    >
-                      {{ audit.status }}
-                    </span>
+                    <StatusBadge type="status" :value="audit.status" />
                   </div>
                   <span class="text-slate-400 font-medium">{{ formatDate(audit.created_at) }}</span>
                 </div>
@@ -1237,72 +1059,10 @@
     />
 
     <!-- Toast Notification Stack -->
-    <div
-      class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"
-    >
-      <TransitionGroup
-        enter-active-class="transform ease-out duration-300 transition"
-        enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-        enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-        leave-active-class="transition ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-for="toast in notifications"
-          :key="toast.id"
-          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border border-slate-100 bg-white/90 backdrop-blur-md p-4 shadow-xl shadow-slate-200/50 flex items-start gap-3"
-        >
-          <div
-            :class="[
-              'h-8 w-8 rounded-xl flex items-center justify-center border shrink-0',
-              toast.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : '',
-              toast.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' : '',
-              toast.type === 'error' ? 'bg-rose-50 text-rose-600 border-rose-100' : '',
-            ]"
-          >
-            <svg
-              v-if="toast.type === 'success'"
-              class="h-4.5 w-4.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.5"
-                d="M9 12l2 2 4-4"
-              />
-            </svg>
-            <svg v-else class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.5"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <div class="flex-1 space-y-0.5 pt-0.5">
-            <p class="text-xs font-bold text-slate-700 leading-normal">{{ toast.message }}</p>
-          </div>
-          <button
-            class="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
-            @click="notifications = notifications.filter((n) => n.id !== toast.id)"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      </TransitionGroup>
-    </div>
+    <ToastNotification
+      :notifications="notifications"
+      @dismiss="(id) => notifications = notifications.filter((n) => n.id !== id)"
+    />
   </div>
 </template>
 
@@ -1311,6 +1071,10 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import SubmitItemModal from './SubmitItemModal.vue';
 import RejectionEmailModal from './RejectionEmailModal.vue';
+import StatusBadge from './StatusBadge.vue';
+import ToastNotification from './ToastNotification.vue';
+import UserListItem from './UserListItem.vue';
+import ModerationItemCard from './ModerationItemCard.vue';
 
 // Tab controls
 const activeTab = ref('queue'); // Tabs: 'queue' or 'users'
