@@ -1,0 +1,31 @@
+# Exclude local dependency directories (forces clean package installs inside containers)
+node_modules
+vendor
+
+# Exclude local environment files and logs
+.env
+.env*.local
+storage/logs/*.log
+storage/framework/views/*.php
+storage/framework/cache/data/*
+
+# Exclude active SQLite database databases
+database/*.sqlite
+database/*.sqlite-journal
+
+# Exclude repository files and metadata
+.git
+.gitignore
+.gitattributes
+.editorconfig
+.phpunit.result.cache
+.npmrc
+.qodo
+
+# Exclude IDE/Editor files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
