@@ -222,7 +222,6 @@
             :item="item"
             :is-active="activeItemId === item.id"
             :format-relative-time="formatRelativeTime"
-            :format-flag-name="formatFlagName"
             @select="selectItem"
           />
         </div>

@@ -62,23 +62,13 @@
     </p>
 
     <!-- Flags preview -->
-    <div
-      v-if="item.heuristic_flags && item.heuristic_flags.length"
-      class="flex flex-wrap gap-1 mt-1"
-    >
-      <span
-        v-for="flag in item.heuristic_flags"
-        :key="flag"
-        class="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 border border-slate-200"
-      >
-        {{ formatFlagName(flag) }}
-      </span>
-    </div>
+    <HeuristicFlagList :flags="item.heuristic_flags" />
   </div>
 </template>
 
 <script setup>
 import StatusBadge from './StatusBadge.vue';
+import HeuristicFlagList from './HeuristicFlagList.vue';
 
 defineProps({
   item: {
@@ -90,10 +80,6 @@ defineProps({
     default: false,
   },
   formatRelativeTime: {
-    type: Function,
-    required: true,
-  },
-  formatFlagName: {
     type: Function,
     required: true,
   }
