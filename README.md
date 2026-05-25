@@ -39,14 +39,22 @@ If you prefer to run the application components individually on your host machin
 #### ⚙️ Backend Setup (Laravel)
 
 1. **Install Dependencies**:
+   Run the following command in your terminal.
    ```bash
    composer install
    ```
+   > [!TIP]
+   > **Composer not found?** If the `composer` command fails, you can download it locally into this folder by running:
+   > ```bash
+   > php -r "copy('https://getcomposer.org/installer', 'setup.php');" && php setup.php --filename=composer.phar && php -r "unlink('setup.php');"
+   > ```
+   > Then, use `php composer.phar install` instead of `composer install`.
 
 2. **Configure Environment Variables**:
-   Copy `.env.example` to `.env`. The database path defaults to an auto-created SQLite file (`database/database.sqlite`).
+   Copy the example environment file and generate a unique application key.
    ```bash
    cp .env.example .env
+   php artisan key:generate
    ```
 
 3. **Initialize Database**:
@@ -72,7 +80,8 @@ If you prefer to run the application components individually on your host machin
    ```bash
    npm run dev
    ```
-   The interactive moderation panel will be available at `http://localhost:5173`.
+   > [!IMPORTANT]
+   > Keep this terminal running! Vite serves the frontend assets, but you should still access the application via the Backend URL: **`http://127.0.0.1:8000`**.
 
 ---
 
