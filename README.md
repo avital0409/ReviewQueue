@@ -8,6 +8,9 @@ A high-fidelity, production-grade moderation oversight application built with **
 
 ### 🐳 1. Running via Docker (Lightweight & Instant / Recommended)
 
+#### 📦 Prerequisites
+- **Docker** and **Docker Compose** installed and running on your machine.
+
 To build and run the full-stack application instantly in seconds with **absolutely zero manual setup** (Docker will automatically handle creating `.env` from `.env.example`, generating a secure `APP_KEY`, compiling frontend assets, creating the SQLite database, and running migrations/seeders):
 
 1. **Build and Start Container**:
@@ -33,8 +36,11 @@ If you prefer to run the application components individually on your host machin
 
 #### 📦 Prerequisites
 - **PHP** (8.2 or 8.3)
+  - *macOS:* `brew install php`
 - **Composer**
+  - *macOS:* `brew install composer`
 - **Node.js** (v18 or higher) & **NPM**
+  - *macOS:* `brew install node`
 
 #### ⚙️ Backend Setup (Laravel)
 
@@ -43,12 +49,6 @@ If you prefer to run the application components individually on your host machin
    ```bash
    composer install
    ```
-   > [!TIP]
-   > **Composer not found?** If the `composer` command fails, you can download it locally into this folder by running:
-   > ```bash
-   > php -r "copy('https://getcomposer.org/installer', 'setup.php');" && php setup.php --filename=composer.phar && php -r "unlink('setup.php');"
-   > ```
-   > Then, use `php composer.phar install` instead of `composer install`.
 
 2. **Configure Environment Variables**:
    Copy the example environment file and generate a unique application key.
